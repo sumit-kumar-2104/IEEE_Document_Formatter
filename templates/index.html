@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IEEE Document Formatter</title>
+  <style>
+      .section { margin-bottom: 20px; }
+    .section-block { border-bottom: 1px solid #ccc; padding-bottom: 15px; margin-bottom: 15px; }
+    .section-title { color: #333; margin-top: 10px; }
+    .subsection-title { color: #555; margin-left: 10px; }
+    pre { background-color: #f5f5f5; padding: 10px; overflow-x: auto; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+    }
+    .section {
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin: 1em 0;
+      border-radius: 6px;
+      background-color: #f2f2f2;
+    }
+    .subsection {
+      margin-left: 1.5em;
+      margin-top: 1em;
+      border-left: 3px solid #ccc;
+      padding-left: 1em;
+    }
+    h2, h3, h4 {
+      color: #444;
+    }
+    .hidden {
+      display: none;
+    }
+    pre {
+      background: #eee;
+      padding: 1em;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>IEEE Document Formatter</h1>
+
+  <form id="uploadForm" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".pdf,.docx,.doc,.zip" required>
+    <button type="submit">Upload</button>
+  </form>
+
+
+  <div id="output" class="hidden">
+    <h2>Title</h2>
+    <div id="title" class="section"></div>
+
+    <h2>Abstract</h2>
+    <div id="abstract" class="section"></div>
+
+    <h2>Keywords</h2>
+    <div id="keywords" class="section"></div>
+
+    <h2>Sections</h2>
+    <div id="sections" class="section"></div>
+
+    <h2>References</h2>
+    <ul id="references" class="section"></ul>
+
+    <h2>Raw Parsed JSON</h2>
+    <pre id="parsedOutput" class="section"></pre>
+  </div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const res = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      const parsed = data.parsed;
+
+      document.getElementById('output').classList.remove('hidden');
+      document.getElementById('title').textContent = parsed.title || 'N/A';
+      document.getElementById('abstract').textContent = parsed.abstract || 'N/A';
+      document.getElementById('keywords').textContent = parsed.keywords || 'N/A';
+
+      // Handle Sections and Subsections
+      const sectionDiv = document.getElementById('sections');
+      sectionDiv.innerHTML = '';
+
+      (parsed.sections || []).forEach(section => {
+        const sectionBlock = document.createElement('div');
+        sectionBlock.className = 'section-block';
+
+        const heading = document.createElement('h3');
+        heading.textContent = section.heading || 'Untitled Section';
+        heading.className = 'section-title';
+        sectionBlock.appendChild(heading);
+
+        if (section.content) {
+          const content = document.createElement('p');
+          content.textContent = section.content;
+          sectionBlock.appendChild(content);
+        }
+
+        // Subsections
+        (section.subsections || []).forEach(sub => {
+          const subDiv = document.createElement('div');
+          subDiv.className = 'subsection';
+
+          const subTitle = document.createElement('h4');
+          subTitle.textContent = sub.heading || 'Untitled Subsection';
+          subTitle.className = 'subsection-title';
+          subDiv.appendChild(subTitle);
+
+          const subContent = document.createElement('p');
+          subContent.textContent = sub.content || '';
+          subDiv.appendChild(subContent);
+
+          sectionBlock.appendChild(subDiv);
+        });
+
+        sectionDiv.appendChild(sectionBlock);
+      });
+
+      // Handle References
+      const refList = document.getElementById('references');
+      refList.innerHTML = '';
+      (parsed.references || []).forEach(ref => {
+        const li = document.createElement('li');
+        li.textContent = ref.trim();
+        refList.appendChild(li);
+      });
+
+      // Show raw JSON
+      document.getElementById('parsedOutput').textContent = JSON.stringify(parsed, null, 2);
+    });
+  </script>
+</body>
+
+</html>
