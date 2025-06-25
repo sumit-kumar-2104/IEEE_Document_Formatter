@@ -1,15 +1,5 @@
-import docx
 import fitz  # PyMuPDF
-import zipfile
-import os
 import re
-import subprocess
-from pathlib import Path
-from collections import OrderedDict
-
-
-
-
 
 COMMON_SECTIONS = {
     "introduction", "related work", "literature review", "methodology",
@@ -17,20 +7,30 @@ COMMON_SECTIONS = {
     "conclusion", "future work", "acknowledgment", "acknowledgement"
 }
 
+EMAIL_REGEX = re.compile(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b')
+AFFILIATION_KEYWORDS = ["university", "institute", "department", "college", "school", "research", "tcs", "technologies", "engineering"]
+
 def is_possible_section_heading(text):
     text = text.strip()
     if not text or len(text.split()) > 10:
         return False
     if text.lower() in COMMON_SECTIONS:
         return True
-    return bool(re.match(r'^[A-Z][A-Za-z\s\-:]{1,80}$', text))
+    return bool(re.match(r'^([IVXLC]+\.)?\s*[A-Z][A-Za-z0-9\s\-:,]{1,80}$', text)) and text == text.upper()
 
+def is_affiliation_line(text):
+    text = text.lower()
+    return any(kw in text for kw in AFFILIATION_KEYWORDS) or EMAIL_REGEX.search(text)
 
 def parse_pdf(file_path):
-    doc = fitz.open(file_path)
+    try:
+        doc = fitz.open(file_path)
+    except Exception as e:
+        print("PDF open failed:", e)
+        return {"error": "Could not open PDF"}
     raw_text = "\n".join([page.get_text("text") for page in doc])
 
-    # Normalize and split into lines
+    # Normalize and split
     raw_text = re.sub(r'\s+\n', '\n', raw_text)
     lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
 
@@ -43,40 +43,64 @@ def parse_pdf(file_path):
     }
 
     current_section = None
-    in_abstract = False
     in_references = False
     title_found = False
-    abstract_collected = []
+    skip_authors = True
 
-    for idx, line in enumerate(lines):
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
         lower = line.lower()
 
-        # Skip author/email lines as section
-        if re.search(r'\b(?:[A-Z][a-z]+\s){1,3}[A-Z][a-z]+', line) and '@' in line:
+        # Skip author/affiliation lines
+        if is_affiliation_line(line):
+            i += 1
             continue
 
         # --- Title ---
-        if not title_found and not re.match(r'(abstract|keywords?|index terms|references?)', lower):
+        if not title_found:
             result["title"] = line
             title_found = True
+            i += 1
             continue
 
         # --- Abstract ---
-        if re.match(r'^abstract\b[:\-]?\s*$', lower):
-            in_abstract = True
+        if re.match(r'^abstract\b', lower):
+            abstract = []
+
+            # Case: inline abstract
+            inline_match = re.match(r'^abstract\b[:\-\—]?\s*(.+)', line, flags=re.I)
+            if inline_match:
+                abstract.append(inline_match.group(1).strip())
+
+            # Collect subsequent lines
+            i += 1
+            while i < len(lines):
+                next_line = lines[i].strip()
+                lower_next = next_line.lower()
+
+                if re.match(r'^(keywords?|index terms|references?)\b', lower_next):
+                    break
+                if is_affiliation_line(next_line):
+                    break
+                abstract.append(next_line)
+                i += 1
+
+            result["abstract"] = " ".join(abstract).strip()
             continue
-        if in_abstract:
-            if re.match(r'^(keywords?|index terms|references?)\b', lower) or is_possible_section_heading(line):
-                in_abstract = False
-                result["abstract"] = " ".join(abstract_collected).strip()
-                abstract_collected = []
-            else:
-                abstract_collected.append(line)
-                continue
 
         # --- Keywords ---
-        if re.match(r'^(keywords|index terms)\b[:\-]?', lower):
-            result["keywords"] = re.sub(r'^(keywords|index terms)[:\-]?', '', line, flags=re.I).strip()
+        if re.match(r'^(keywords|index terms)\b[:\-\—]?', lower):
+            keyword_line = re.sub(r'^(keywords|index terms)[:\-\—]?', '', line, flags=re.I).strip()
+            keyword_parts = [keyword_line]
+            i += 1
+            while i < len(lines):
+                next_line = lines[i].strip()
+                if is_possible_section_heading(next_line) or next_line.lower().startswith("introduction"):
+                    break
+                keyword_parts.append(next_line)
+                i += 1
+            result["keywords"] = " ".join(keyword_parts).strip()
             continue
 
         # --- References ---
@@ -85,9 +109,12 @@ def parse_pdf(file_path):
             if current_section:
                 result["sections"].append(current_section)
                 current_section = None
+            i += 1
             continue
+
         if in_references:
             result["references"].append(line)
+            i += 1
             continue
 
         # --- Section Headings ---
@@ -98,13 +125,18 @@ def parse_pdf(file_path):
         elif current_section:
             current_section["content"] += line + " "
 
-    # Final flush
-    if abstract_collected:
-        result["abstract"] = " ".join(abstract_collected).strip()
+        i += 1
+
     if current_section:
         result["sections"].append(current_section)
 
+    if not result["title"] and not result["abstract"] and not result["sections"]:
+        return {"error": "Unable to parse PDF content"}
+
     return result
+
+    
+
 
 
 #def parse_pdf(file_path):

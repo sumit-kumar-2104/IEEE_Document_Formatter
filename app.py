@@ -23,6 +23,8 @@ def upload():
 
     try:
         parsed_data = parse_input_file(file_path)
+        if not parsed_data or "error" in parsed_data:
+            return jsonify({"error": parsed_data.get("error", "Unknown error")}), 400
         if "error" in parsed_data:
             return jsonify({"error": parsed_data["error"]}), 400
 
