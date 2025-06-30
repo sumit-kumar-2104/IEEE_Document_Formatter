@@ -98,8 +98,12 @@
     <!-- LEFT: Editable structured content -->
     <div id="structuredEditor" class="panel"></div>
 
-    <!-- RIGHT: IEEE formatted Markdown output -->
-    <div id="ieeePreview" class="panel"></div>
+    
+    <!-- RIGHT: IEEE PDF Preview -->
+    <div id="ieeePreview" class="panel">
+      <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
+    </div>
+
   </div>
 
   <script>
@@ -160,15 +164,21 @@
     async function regenerateMarkdown() {
       captureEditedData();
 
-      const res = await fetch('/generate_ieee', {
+      const res = await fetch('/generate_pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parsedData)
       });
 
       const result = await res.json();
-      document.getElementById('ieeePreview').textContent = result.markdown.formatted_markdown || result.markdown.error || '';
+      const iframe = document.getElementById('pdfFrame');
+      if (result.success) {
+        iframe.src = `/static/temp.pdf#toolbar=0&view=FitH`;  // disable toolbar, fit page
+      } else {
+        iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
+      }
     }
+
 
     function downloadMarkdown() {
       const text = document.getElementById('ieeePreview').textContent;

@@ -5,6 +5,7 @@ import json
 from utils.parsers import parse_input_file
 from utils.title_suggested import suggest_titles
 from utils.llm_formatter import generate_ieee_markdown
+from utils.latex_formatter import generate_pdf_from_data
 
 app = Flask(__name__)
 app.secret_key = 'dev-key-93c1745e3f2342c9bfa814bcdf2fd819'
@@ -86,6 +87,21 @@ def generate_ieee():
         return jsonify({"markdown": markdown})
     except Exception as e:
         return jsonify({"error": f"Error generating IEEE markdown: {str(e)}"}), 500
+
+
+
+
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data received"}), 400
+
+    result = generate_pdf_from_data(data)
+    return jsonify(result)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
