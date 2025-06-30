@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from utils.parsers import parse_input_file
-from utils.title_suggester import suggest_titles
+# OLD:
+# from utils.title_suggester import suggest_titles
+
+# NEW:
+from utils.title_suggested import suggest_titles
+
 
 UPLOAD_FOLDER = "uploads"
 
