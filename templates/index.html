@@ -4,38 +4,110 @@
   <meta charset="UTF-8">
   <title>IEEE Document Formatter</title>
   <style>
-      .section { margin-bottom: 20px; }
-    .section-block { border-bottom: 1px solid #ccc; padding-bottom: 15px; margin-bottom: 15px; }
-    .section-title { color: #333; margin-top: 10px; }
-    .subsection-title { color: #555; margin-left: 10px; }
-    pre { background-color: #f5f5f5; padding: 10px; overflow-x: auto; }
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 2em;
+      background: linear-gradient(to right, #f9f9f9, #e3f2fd);
+      color: #333;
     }
+
+    h1 {
+      text-align: center;
+      color: #1976d2;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    form {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      background-color: #1976d2;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0d47a1;
+    }
+
     .section {
       border: 1px solid #ccc;
+      border-left: 6px solid #1976d2;
+      background-color: #ffffff;
       padding: 1em;
-      margin: 1em 0;
-      border-radius: 6px;
-      background-color: #f2f2f2;
+      margin: 1.5em 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
+
+    .section-title,
+    .subsection-title {
+      color: #1976d2;
+    }
+
+    .section-block {
+      margin-bottom: 1.5em;
+      padding-bottom: 1em;
+      border-bottom: 1px dashed #bbb;
+    }
+
     .subsection {
       margin-left: 1.5em;
       margin-top: 1em;
-      border-left: 3px solid #ccc;
+      border-left: 3px solid #64b5f6;
       padding-left: 1em;
+      background-color: #f1f8ff;
+      border-radius: 6px;
+      padding: 0.5em 1em;
     }
-    h2, h3, h4 {
-      color: #444;
+
+    pre {
+      background-color: #e3f2fd;
+      padding: 1em;
+      overflow-x: auto;
+      border-radius: 6px;
+      box-shadow: inset 0 0 3px #ccc;
     }
+
+    ul#references {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+
+    ul#references li {
+      margin-bottom: 0.5em;
+    }
+
     .hidden {
       display: none;
     }
-    pre {
-      background: #eee;
-      padding: 1em;
-      overflow: auto;
+
+    h2 {
+      border-bottom: 2px solid #1976d2;
+      padding-bottom: 5px;
+      margin-top: 2em;
+      color: #1565c0;
+    }
+
+    p {
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -47,9 +119,11 @@
     <button type="submit">Upload</button>
   </form>
 
-
   <div id="output" class="hidden">
-    <h2>Title</h2>
+    <h2>Suggested Titles</h2>
+    <select id="titleOptions" class="section"></select>
+
+    <h2>Selected Title</h2>
     <div id="title" class="section"></div>
 
     <h2>Abstract</h2>
@@ -80,16 +154,37 @@
 
       const data = await res.json();
       const parsed = data.parsed;
+      const suggestedTitles = data.suggested_titles || [];
 
       document.getElementById('output').classList.remove('hidden');
-      document.getElementById('title').textContent = parsed.title || 'N/A';
+
+      const titleDropdown = document.getElementById('titleOptions');
+      const titleDiv = document.getElementById('title');
+      titleDropdown.innerHTML = '';
+
+      suggestedTitles.forEach(title => {
+        const opt = document.createElement('option');
+        opt.value = title;
+        opt.textContent = title;
+        titleDropdown.appendChild(opt);
+      });
+
+      if (suggestedTitles.length) {
+        titleDropdown.value = suggestedTitles[0];
+        titleDiv.textContent = suggestedTitles[0];
+      } else {
+        titleDiv.textContent = parsed.title || 'N/A';
+      }
+
+      titleDropdown.onchange = () => {
+        titleDiv.textContent = titleDropdown.value;
+      };
+
       document.getElementById('abstract').textContent = parsed.abstract || 'N/A';
       document.getElementById('keywords').textContent = parsed.keywords || 'N/A';
 
-      // Handle Sections and Subsections
       const sectionDiv = document.getElementById('sections');
       sectionDiv.innerHTML = '';
-
       (parsed.sections || []).forEach(section => {
         const sectionBlock = document.createElement('div');
         sectionBlock.className = 'section-block';
@@ -105,7 +200,6 @@
           sectionBlock.appendChild(content);
         }
 
-        // Subsections
         (section.subsections || []).forEach(sub => {
           const subDiv = document.createElement('div');
           subDiv.className = 'subsection';
@@ -125,7 +219,6 @@
         sectionDiv.appendChild(sectionBlock);
       });
 
-      // Handle References
       const refList = document.getElementById('references');
       refList.innerHTML = '';
       (parsed.references || []).forEach(ref => {
@@ -134,10 +227,8 @@
         refList.appendChild(li);
       });
 
-      // Show raw JSON
       document.getElementById('parsedOutput').textContent = JSON.stringify(parsed, null, 2);
     });
   </script>
 </body>
-
 </html>
