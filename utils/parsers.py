@@ -67,20 +67,25 @@ def convert_to_docx(input_path):
         output_dir = str(Path(input_path).parent)
         result = subprocess.run([
             'soffice', '--headless', '--convert-to', 'docx', '--outdir', output_dir, input_path
-        ], capture_output=True, text=True, check=True)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        print("LibreOffice stdout:", result.stdout)
-        print("LibreOffice stderr:", result.stderr)
+        # Decode safely to avoid UnicodeDecodeError on Windows
+        stdout = result.stdout.decode('utf-8', errors='ignore')
+        stderr = result.stderr.decode('utf-8', errors='ignore')
+        print("LibreOffice stdout:", stdout)
+        print("LibreOffice stderr:", stderr)
 
         converted_path = str(Path(input_path).with_suffix('.docx'))
         if os.path.exists(converted_path):
             return converted_path
+
     except subprocess.CalledProcessError as e:
-        print("LibreOffice failed:", e.stderr)
+        print("LibreOffice failed:", e)
     except Exception as ex:
         print("Conversion error:", ex)
 
     return None
+
 
 
 def parse_zip(path):

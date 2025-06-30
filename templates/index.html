@@ -47,6 +47,15 @@
       background-color: #0d47a1;
     }
 
+    #editorBtn {
+      background-color: #43a047;
+      margin-top: 20px;
+    }
+
+    #editorBtn:hover {
+      background-color: #2e7d32;
+    }
+
     .section {
       border: 1px solid #ccc;
       border-left: 6px solid #1976d2;
@@ -120,6 +129,8 @@
   </form>
 
   <div id="output" class="hidden">
+    <button id="editorBtn">Open in Markdown Editor</button>
+    
     <h2>Suggested Titles</h2>
     <select id="titleOptions" class="section"></select>
 
@@ -140,9 +151,13 @@
 
     <h2>Raw Parsed JSON</h2>
     <pre id="parsedOutput" class="section"></pre>
+
+    
   </div>
 
   <script>
+    let parsed = {};
+
     document.getElementById('uploadForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
@@ -153,7 +168,7 @@
       });
 
       const data = await res.json();
-      const parsed = data.parsed;
+      parsed = data.parsed;
       const suggestedTitles = data.suggested_titles || [];
 
       document.getElementById('output').classList.remove('hidden');
@@ -229,6 +244,13 @@
 
       document.getElementById('parsedOutput').textContent = JSON.stringify(parsed, null, 2);
     });
+
+    document.getElementById('editorBtn').addEventListener('click', function () {
+      // No need to check for parsed content here — server handles it
+      window.open('/editor', '_blank');
+    });
+
+
   </script>
 </body>
 </html>

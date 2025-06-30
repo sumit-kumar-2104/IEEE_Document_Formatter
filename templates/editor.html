@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IEEE Markdown Editor</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 1em;
+      background: #f1f8e9;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2e7d32;
+      font-size: 2em;
+      margin-bottom: 1em;
+    }
+
+    #editorContainer {
+      display: flex;
+      gap: 1em;
+      height: 85vh;
+    }
+
+    .panel {
+      flex: 1;
+      padding: 1em;
+      border-radius: 10px;
+      overflow-y: auto;
+    }
+
+    #structuredEditor {
+      background: #eef;
+      border-left: 6px solid #1e88e5;
+    }
+
+    #ieeePreview {
+      white-space: pre-wrap;
+      background: #f4f4f4;
+      border-left: 6px solid #757575;
+    }
+
+    .editable-heading {
+      font-weight: bold;
+      margin-top: 1em;
+      color: #1a237e;
+      font-size: 1.1em;
+    }
+
+    .editable-subheading {
+      font-weight: bold;
+      margin-top: 0.5em;
+      margin-left: 1em;
+      color: #3949ab;
+    }
+
+    .editable-para {
+      margin-left: 1.5em;
+      margin-bottom: 0.5em;
+    }
+
+    [contenteditable]:focus {
+      outline: 2px dashed #1e88e5;
+      background-color: #fffde7;
+    }
+
+    button {
+      margin-top: 1em;
+      padding: 10px 20px;
+      background-color: #388e3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #2e7d32;
+    }
+
+    #controlBar {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>IEEE Document Editor</h1>
+
+  <div id="controlBar">
+    <button onclick="regenerateMarkdown()">Regenerate IEEE Markdown</button>
+    <button onclick="downloadMarkdown()">Download Markdown</button>
+  </div>
+
+  <div id="editorContainer">
+    <!-- LEFT: Editable structured content -->
+    <div id="structuredEditor" class="panel"></div>
+
+    <!-- RIGHT: IEEE formatted Markdown output -->
+    <div id="ieeePreview" class="panel"></div>
+  </div>
+
+  <script>
+    const parsedData = {{ parsed | tojson }};
+
+    function renderEditableStructure() {
+      const container = document.getElementById('structuredEditor');
+      container.innerHTML = '';
+
+      container.innerHTML += `<div class="editable-heading">Title</div>
+        <div class="editable-para" contenteditable="true" data-key="title">${parsedData.title || ''}</div>`;
+
+      if (parsedData.abstract)
+        container.innerHTML += `<div class="editable-heading">Abstract</div>
+        <div class="editable-para" contenteditable="true" data-key="abstract">${parsedData.abstract}</div>`;
+
+      if (parsedData.keywords)
+        container.innerHTML += `<div class="editable-heading">Keywords</div>
+        <div class="editable-para" contenteditable="true" data-key="keywords">${parsedData.keywords}</div>`;
+
+      (parsedData.sections || []).forEach((sec, i) => {
+        container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading">${sec.heading}</div>
+          <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content">${sec.content}</div>`;
+
+        (sec.subsections || []).forEach((sub, j) => {
+          container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading">${sub.heading}</div>
+            <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content">${sub.content}</div>`;
+        });
+      });
+
+      if (parsedData.references && parsedData.references.length > 0) {
+        container.innerHTML += `<div class="editable-heading">References</div>`;
+        parsedData.references.forEach((ref, i) => {
+          container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${ref}</div>`;
+        });
+      }
+    }
+
+    function captureEditedData() {
+      document.querySelectorAll('[contenteditable]').forEach(el => {
+        const key = el.dataset.key;
+        const sec = el.dataset.sec;
+        const subsec = el.dataset.subsec;
+        const sub = el.dataset.sub;
+        const ref = el.dataset.ref;
+        const text = el.innerText.trim();
+
+        if (key) parsedData[key] = text;
+        else if (ref !== undefined) parsedData.references[ref] = text;
+        else if (sec !== undefined && subsec !== undefined) {
+          parsedData.sections[sec].subsections[subsec][sub] = text;
+        } else if (sec !== undefined) {
+          parsedData.sections[sec][sub] = text;
+        }
+      });
+    }
+
+    async function regenerateMarkdown() {
+      captureEditedData();
+
+      const res = await fetch('/generate_ieee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsedData)
+      });
+
+      const result = await res.json();
+      document.getElementById('ieeePreview').textContent = result.markdown.formatted_markdown || result.markdown.error || '';
+    }
+
+    function downloadMarkdown() {
+      const text = document.getElementById('ieeePreview').textContent;
+      const blob = new Blob([text], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ieee_formatted.md";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initial render
+    renderEditableStructure();
+    regenerateMarkdown();
+  </script>
+</body>
+</html>

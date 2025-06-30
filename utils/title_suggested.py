@@ -2,25 +2,26 @@ import subprocess
 import re
 
 def suggest_titles(doc_data):
-    # Step 1: Get intro text (first section content)
-    intro_text = doc_data.get("sections", [{}])[0].get("content", "")[:1000].strip()
-
+    # Step 1: Extract intro or fallback to abstract/first section
+    intro_text = ""
+    sections = doc_data.get("sections", [])
+    if sections:
+        intro_text = sections[0].get("content", "")[:1500].strip()
     if not intro_text:
-        return ["No introduction found to suggest titles."]
+        intro_text = doc_data.get("abstract", "")[:1500].strip()
+    if not intro_text:
+        return ["No sufficient content found to suggest titles."]
 
-    # Step 2: Create prompt
-    prompt = f"""
-Suggest 4 IEEE-style research paper titles based on the introduction below.
-Please return them clearly as a bullet list or numbered list.
+    # Step 2: Create structured prompt
+    prompt = f"""You are a research assistant. Based on the content below, generate 4 IEEE-style academic paper titles. Each title must be clear, concise (max 15 words), and on a new line.
 
-Introduction:
+--- Content ---
 {intro_text}
 """
 
     try:
-        # Step 3: Run Ollama with a local model (replace with what works)
         result = subprocess.run(
-            ["ollama", "run", "phi3:mini"],  # ← change model name if needed
+            ["ollama", "run", "phi3:mini"],  # Use your model name here
             input=prompt,
             text=True,
             capture_output=True,
@@ -28,21 +29,15 @@ Introduction:
         )
         output = result.stdout.strip()
 
-        # Step 4: Extract titles from output using regex (handles bullet or numbered)
-        titles = re.findall(r"[-•\d.]*\s*(.+)", output)
-        clean_titles = [title.strip() for title in titles if len(title.strip()) > 15]
+        # Step 3: Post-process: remove bullets/numbers and trim
+        lines = [re.sub(r"^[•\-–\d.]+", "", line).strip() for line in output.splitlines() if line.strip()]
+        titles = [line for line in lines if 10 < len(line) < 150]
 
-        # Return exactly 4 titles, pad if needed
-        while len(clean_titles) < 4:
-            clean_titles.append(f"Generated Title {len(clean_titles)+1}")
-
-        return clean_titles[:4]
+        # Step 4: Pad or trim to 4 titles
+        while len(titles) < 4:
+            titles.append(f"Generated Title {len(titles)+1}")
+        return titles[:4]
 
     except Exception as e:
         print("Error running Ollama:", e)
-        return [
-            "Fallback Title 1",
-            "Fallback Title 2",
-            "Fallback Title 3",
-            "Fallback Title 4"
-        ]
+        return [f"Fallback Title {i}" for i in range(1, 5)]

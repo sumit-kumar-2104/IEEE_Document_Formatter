@@ -44,7 +44,6 @@ def parse_docx(path):
     in_references = False
     in_abstract = False
     title_found = False
-    abstract_started = False
     author_block_ended = False
     author_detected = False
 
@@ -53,9 +52,9 @@ def parse_docx(path):
         if not text:
             continue
 
-        # --- Title ---
+        # --- Title Detection ---
         if not title_found:
-            if para.style.name.lower().startswith("title"):
+            if para.style.name.lower().startswith("title") or para.style.name.lower().startswith("heading 1"):
                 result["title"] = text
                 title_found = True
                 continue
@@ -64,7 +63,7 @@ def parse_docx(path):
                 title_found = True
                 continue
 
-        # --- Skip Author Block ---
+        # --- Skip Author Lines ---
         if not author_block_ended:
             if is_author_line(text):
                 author_detected = True
@@ -74,19 +73,18 @@ def parse_docx(path):
                 continue
             continue
 
-        # --- Abstract Detection ---
+        # --- Abstract ---
         if re.match(r'^abstract\b', text, re.IGNORECASE):
             in_abstract = True
             result["abstract"] = ""
             continue
 
         if in_abstract:
-            if re.match(r'^(keywords?|index terms|references?)\b', text, re.IGNORECASE) or is_possible_heading(text) or is_author_line(text):
+            if re.match(r'^(keywords?|index terms|references?)\b', text, re.IGNORECASE) or is_possible_heading(text):
                 in_abstract = False
             else:
                 result["abstract"] += text + " "
-                continue  # remain inside abstract block
-
+                continue
 
         # --- Keywords ---
         if any(text.lower().startswith(k) for k in KEYWORD_HEADERS):
@@ -97,6 +95,7 @@ def parse_docx(path):
         # --- References ---
         if any(text.lower().startswith(r) for r in REFERENCE_HEADERS):
             in_references = True
+            # Finalize current section
             if current_subsection and current_section:
                 current_section["subsections"].append(current_subsection)
                 current_subsection = None
@@ -109,11 +108,7 @@ def parse_docx(path):
             result["references"].append(text)
             continue
 
-        # --- Skip leftover author lines ---
-        if is_author_line(text):
-            continue
-
-        # --- Sections / Subsections ---
+        # --- Heading Detection ---
         level = extract_heading_level(text)
         if is_possible_heading(text) and not in_abstract and not in_references:
             if level and '.' in level:
@@ -125,7 +120,7 @@ def parse_docx(path):
                     "content": ""
                 }
             else:
-                # New Section
+                # Section
                 if current_subsection and current_section:
                     current_section["subsections"].append(current_subsection)
                     current_subsection = None
@@ -144,7 +139,7 @@ def parse_docx(path):
         elif current_section:
             current_section["content"] += text + " "
 
-    # --- Finalize Remaining ---
+    # --- Finalize Remaining Sections ---
     if current_subsection and current_section:
         current_section["subsections"].append(current_subsection)
     if current_section:

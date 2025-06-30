@@ -8,15 +8,18 @@ COMMON_SECTIONS = {
 }
 
 EMAIL_REGEX = re.compile(r'\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b')
-AFFILIATION_KEYWORDS = ["university", "institute", "department", "college", "school", "research", "tcs", "technologies", "engineering"]
+AFFILIATION_KEYWORDS = [
+    "university", "institute", "department", "college", "school",
+    "research", "tcs", "technologies", "engineering"
+]
 
 def is_possible_section_heading(text):
     text = text.strip()
-    if not text or len(text.split()) > 10:
+    if not text or len(text.split()) > 15:
         return False
     if text.lower() in COMMON_SECTIONS:
         return True
-    return bool(re.match(r'^([IVXLC]+\.)?\s*[A-Z][A-Za-z0-9\s\-:,]{1,80}$', text)) and text == text.upper()
+    return bool(re.match(r'^([IVXLC]+\.|\d+[\.\)])?\s*[A-Z][A-Za-z0-9\s\-:,]{1,80}$', text))
 
 def is_affiliation_line(text):
     text = text.lower()
@@ -28,9 +31,8 @@ def parse_pdf(file_path):
     except Exception as e:
         print("PDF open failed:", e)
         return {"error": "Could not open PDF"}
-    raw_text = "\n".join([page.get_text("text") for page in doc])
 
-    # Normalize and split
+    raw_text = "\n".join([page.get_text("text") for page in doc])
     raw_text = re.sub(r'\s+\n', '\n', raw_text)
     lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
 
@@ -45,15 +47,24 @@ def parse_pdf(file_path):
     current_section = None
     in_references = False
     title_found = False
-    skip_authors = True
+    author_detected = False
+    author_block_skipped = False
 
     i = 0
     while i < len(lines):
         line = lines[i].strip()
         lower = line.lower()
 
-        # Skip author/affiliation lines
-        if is_affiliation_line(line):
+        # Skip author lines (affiliations/emails)
+        if not author_block_skipped:
+            if is_affiliation_line(line):
+                author_detected = True
+                i += 1
+                continue
+            if author_detected:
+                author_block_skipped = True
+                i += 1
+                continue
             i += 1
             continue
 
@@ -68,20 +79,16 @@ def parse_pdf(file_path):
         if re.match(r'^abstract\b', lower):
             abstract = []
 
-            # Case: inline abstract
             inline_match = re.match(r'^abstract\b[:\-\—]?\s*(.+)', line, flags=re.I)
             if inline_match:
                 abstract.append(inline_match.group(1).strip())
 
-            # Collect subsequent lines
             i += 1
             while i < len(lines):
                 next_line = lines[i].strip()
                 lower_next = next_line.lower()
 
-                if re.match(r'^(keywords?|index terms|references?)\b', lower_next):
-                    break
-                if is_affiliation_line(next_line):
+                if re.match(r'^(keywords?|index terms|references?)\b', lower_next) or is_affiliation_line(next_line):
                     break
                 abstract.append(next_line)
                 i += 1
@@ -117,23 +124,30 @@ def parse_pdf(file_path):
             i += 1
             continue
 
-        # --- Section Headings ---
+        # --- Section Heading ---
         if is_possible_section_heading(line):
             if current_section:
                 result["sections"].append(current_section)
-            current_section = {"heading": line, "content": ""}
+            current_section = {
+                "heading": line,
+                "content": "",
+                "subsections": []
+            }
         elif current_section:
             current_section["content"] += line + " "
 
         i += 1
 
+    # Finalize last section
     if current_section:
         result["sections"].append(current_section)
 
+    # Safety fallback
     if not result["title"] and not result["abstract"] and not result["sections"]:
         return {"error": "Unable to parse PDF content"}
 
     return result
+
 
     
 
