@@ -24,16 +24,16 @@ IEEE_TEMPLATE = r"""
 \section{<< section.heading >>}
 << section.content >>
 
-{% for sub in section.subsections %}
-\subsection{<< sub.heading >>}
-<< sub.content >>
-{% endfor %}
+  {% for sub in section.subsections %}
+  \subsection{<< sub.heading >>}
+  << sub.content >>
+  {% endfor %}
 {% endfor %}
 
 \begin{thebibliography}{99}
-{% for ref in references %}
-\bibitem{} << ref >>
-{% endfor %}
+  {% for ref in references %}
+  \bibitem{} << ref >>
+  {% endfor %}
 \end{thebibliography}
 
 \end{document}
@@ -41,33 +41,48 @@ IEEE_TEMPLATE = r"""
 
 def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
     try:
+        from pathlib import Path
+        import tempfile
+        import subprocess
+        import os
+
+        # Setup Jinja2 template rendering with safe delimiters
         env = Environment(
             loader=BaseLoader(),
-            variable_start_string='<<',  # change delimiters to avoid conflict with LaTeX
+            variable_start_string='<<',
             variable_end_string='>>',
             autoescape=False
         )
         template = env.from_string(IEEE_TEMPLATE)
         tex_code = template.render(**parsed_data)
 
-        # Save .tex and compile
-        import tempfile, subprocess, os
-        from pathlib import Path
+        # Debug: Print the generated LaTeX source
+        print("[DEBUG] LaTeX source:\n", tex_code)
 
+        # Create temporary directory and write .tex file
         with tempfile.TemporaryDirectory() as tmpdir:
             tex_path = Path(tmpdir) / "paper.tex"
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(tex_code)
 
+            # Compile LaTeX to PDF using pdflatex
             result = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, str(tex_path)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
 
-            if result.returncode != 0:
-                return {"error": result.stderr.decode("utf-8")}
+            # Debug: Show pdflatex output
+            print("[DEBUG] STDOUT:\n", result.stdout.decode("utf-8"))
+            print("[DEBUG] STDERR:\n", result.stderr.decode("utf-8"))
 
+            if result.returncode != 0:
+                return {
+                    "error": f"LaTeX compilation failed:\n{result.stderr.decode('utf-8')}\n\n"
+                             f"Log:\n{result.stdout.decode('utf-8')}"
+                }
+
+            # Move generated PDF to output path
             pdf_path = Path(tmpdir) / "paper.pdf"
             if pdf_path.exists():
                 os.makedirs("static", exist_ok=True)
@@ -78,6 +93,5 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
     except FileNotFoundError as e:
         return {"error": f"Missing executable: {e.filename}. Is it installed and in your system PATH?"}
     except Exception as e:
-        print("Subprocess failed:", e)
+        print("[ERROR] Subprocess failed:", e)
         return {"error": str(e)}
-

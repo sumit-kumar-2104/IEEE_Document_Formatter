@@ -108,6 +108,7 @@
 
   <script>
     const parsedData = {{ parsed | tojson }};
+    let debounceTimer;
 
     function renderEditableStructure() {
       const container = document.getElementById('structuredEditor');
@@ -140,6 +141,17 @@
           container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${ref}</div>`;
         });
       }
+
+      // Add input listener for all editable fields
+      document.querySelectorAll('[contenteditable]').forEach(el => {
+        el.addEventListener('input', () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            captureEditedData();
+            regenerateMarkdown(); // Live preview refresh
+          }, 800); // debounce delay
+        });
+      });
     }
 
     function captureEditedData() {
@@ -162,8 +174,6 @@
     }
 
     async function regenerateMarkdown() {
-      captureEditedData();
-
       const res = await fetch('/generate_pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -173,12 +183,11 @@
       const result = await res.json();
       const iframe = document.getElementById('pdfFrame');
       if (result.success) {
-        iframe.src = `/static/temp.pdf#toolbar=0&view=FitH`;  // disable toolbar, fit page
+        iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
       } else {
         iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
       }
     }
-
 
     function downloadMarkdown() {
       const text = document.getElementById('ieeePreview').textContent;
@@ -191,7 +200,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // Initial render
+    // Initial render and preview
     renderEditableStructure();
     regenerateMarkdown();
   </script>
