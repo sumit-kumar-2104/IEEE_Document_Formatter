@@ -1,103 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>IEEE Document Formatter</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 2em;
-      background: linear-gradient(to right, #f9f9f9, #e3f2fd);
-      color: #333;
+      margin: 0;
+      padding: 2em;
+      min-height: 100vh;
+      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0,0,0,0.7)), url('https://source.unsplash.com/1600x900/?code,workspace,ai');
+      background-size: cover;
+      background-attachment: fixed;
+      color: #f5f5f5;
     }
 
     h1 {
-      text-align: center;
-      color: #1976d2;
+      color: #ffb300;
       margin-bottom: 30px;
-      font-size: 2.5em;
+      font-size: 2.8em;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+      animation: fadeInDown 1s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     form {
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
       margin-bottom: 30px;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     input[type="file"] {
-      padding: 8px;
+      padding: 10px;
       border: 1px solid #ccc;
-      border-radius: 6px;
+      border-radius: 8px;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    input[type="file"]:hover {
+      box-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
+      transform: scale(1.03);
     }
 
     button {
-      background-color: #1976d2;
+      background: linear-gradient(45deg, #283593, #1a237e);
       color: white;
-      padding: 10px 20px;
+      padding: 12px 25px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      transition: background-color 0.3s ease;
+      font-size: 1em;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     button:hover {
-      background-color: #0d47a1;
+      transform: scale(1.05);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
     }
 
-    #editorBtn {
-      background-color: #43a047;
-      margin-top: 20px;
+    #editorBtn, #backBtn {
+      background: linear-gradient(45deg, #6a1b9a, #4a148c);
+      margin: 20px 0;
     }
 
     #editorBtn:hover {
-      background-color: #2e7d32;
+      background: linear-gradient(45deg, #4a148c, #38006b);
+    }
+
+    #backBtn {
+      background: linear-gradient(45deg, #d32f2f, #b71c1c);
+    }
+
+    #backBtn:hover {
+      background: linear-gradient(45deg, #b71c1c, #8e0000);
     }
 
     .section {
-      border: 1px solid #ccc;
-      border-left: 6px solid #1976d2;
-      background-color: #ffffff;
+      border: 1px solid #444;
+      border-left: 6px solid #ffb300;
+      background-color: rgba(28, 28, 28, 0.95);
       padding: 1em;
       margin: 1.5em 0;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      animation: fadeIn 1s ease-out;
+      max-width: 900px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     .section-title,
     .subsection-title {
-      color: #1976d2;
+      color: #ffb300;
     }
 
     .section-block {
       margin-bottom: 1.5em;
       padding-bottom: 1em;
-      border-bottom: 1px dashed #bbb;
+      border-bottom: 1px dashed #888;
     }
 
     .subsection {
       margin-left: 1.5em;
       margin-top: 1em;
-      border-left: 3px solid #64b5f6;
+      border-left: 3px solid #ffca28;
       padding-left: 1em;
-      background-color: #f1f8ff;
+      background-color: #424242;
       border-radius: 6px;
       padding: 0.5em 1em;
     }
 
     pre {
-      background-color: #e3f2fd;
+      background-color: #212121;
       padding: 1em;
       overflow-x: auto;
-      border-radius: 6px;
-      box-shadow: inset 0 0 3px #ccc;
+      border-radius: 8px;
+      box-shadow: inset 0 0 5px #000;
+      color: #e0e0e0;
     }
 
     ul#references {
       list-style-type: square;
-      padding-left: 20px;
+      padding-left: 30px;
     }
 
     ul#references li {
@@ -109,14 +150,49 @@
     }
 
     h2 {
-      border-bottom: 2px solid #1976d2;
+      border-bottom: 2px solid #ffb300;
       padding-bottom: 5px;
       margin-top: 2em;
-      color: #1565c0;
+      color: #ffca28;
+      animation: fadeIn 1s ease-out;
     }
 
     p {
-      line-height: 1.6;
+      line-height: 1.7;
+      font-size: 1.05em;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      transition: box-shadow 0.3s ease;
+      background-color: #424242;
+      color: #ffffff;
+    }
+
+    select option {
+      background-color: #424242;
+      color: #ffffff;
+    }
+
+    select:hover {
+      box-shadow: 0 0 10px rgba(255, 179, 0, 0.3);
+    }
+
+    iframe {
+      width: 100%;
+      height: 85vh;
+      border: none;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 600px) {
+      form { flex-direction: column; gap: 10px; }
+      button { width: 100%; }
     }
   </style>
 </head>
@@ -130,7 +206,7 @@
 
   <div id="output" class="hidden">
     <button id="editorBtn">Open in Markdown Editor</button>
-    
+
     <h2>Suggested Titles</h2>
     <select id="titleOptions" class="section"></select>
 
@@ -151,8 +227,11 @@
 
     <h2>Raw Parsed JSON</h2>
     <pre id="parsedOutput" class="section"></pre>
+  </div>
 
-    
+  <div id="editorView" class="hidden">
+    <button id="backBtn">Back to Formatter</button>
+    <iframe id="editorFrame"></iframe>
   </div>
 
   <script>
@@ -246,11 +325,15 @@
     });
 
     document.getElementById('editorBtn').addEventListener('click', function () {
-      // No need to check for parsed content here — server handles it
-      window.open('/editor', '_blank');
+      document.getElementById('output').classList.add('hidden');
+      document.getElementById('editorView').classList.remove('hidden');
+      document.getElementById('editorFrame').src = '/editor';
     });
 
-
+    document.getElementById('backBtn').addEventListener('click', function () {
+      document.getElementById('editorView').classList.add('hidden');
+      document.getElementById('output').classList.remove('hidden');
+    });
   </script>
 </body>
 </html>
