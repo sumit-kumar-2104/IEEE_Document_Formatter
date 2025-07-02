@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>IEEE Markdown Editor</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 1em;
-      background: #f1f8e9;
+      margin: 0;
+      padding: 1em;
+      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://source.unsplash.com/1600x900/?code,editor,workspace');
+      background-size: cover;
+      background-attachment: fixed;
+      color: #f5f5f5;
+      min-height: 100vh;
     }
 
     h1 {
-      text-align: center;
-      color: #2e7d32;
-      font-size: 2em;
+      text-align: left;
+      color: #ffb300;
+      font-size: 2.4em;
       margin-bottom: 1em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
 
     #editorContainer {
@@ -28,61 +34,88 @@
       padding: 1em;
       border-radius: 10px;
       overflow-y: auto;
+      background-color: rgba(28, 28, 28, 0.95);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     }
 
     #structuredEditor {
-      background: #eef;
-      border-left: 6px solid #1e88e5;
+      border-left: 6px solid #ffb300;
     }
 
     #ieeePreview {
       white-space: pre-wrap;
-      background: #f4f4f4;
       border-left: 6px solid #757575;
+      background-color: rgba(40, 40, 40, 0.95);
     }
 
     .editable-heading {
       font-weight: bold;
       margin-top: 1em;
-      color: #1a237e;
-      font-size: 1.1em;
+      color: #ffca28;
+      font-size: 1.2em;
     }
 
     .editable-subheading {
       font-weight: bold;
       margin-top: 0.5em;
       margin-left: 1em;
-      color: #3949ab;
+      color: #fdd835;
     }
 
     .editable-para {
       margin-left: 1.5em;
       margin-bottom: 0.5em;
+      color: #f5f5f5;
     }
 
     [contenteditable]:focus {
-      outline: 2px dashed #1e88e5;
-      background-color: #fffde7;
+      outline: 2px dashed #ffb300;
+      background-color: rgba(255, 243, 224, 0.1);
     }
 
     button {
-      margin-top: 1em;
+      margin: 0.5em;
       padding: 10px 20px;
-      background-color: #388e3c;
+      background-color: #283593;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 1em;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     button:hover {
-      background-color: #2e7d32;
+      transform: scale(1.05);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+      background-color: #1a237e;
+    }
+
+    #backBtn {
+      background: linear-gradient(45deg, #d32f2f, #b71c1c);
+    }
+
+    #backBtn:hover {
+      background: linear-gradient(45deg, #b71c1c, #8e0000);
     }
 
     #controlBar {
-      text-align: center;
+      text-align: left;
       margin-bottom: 1em;
+    }
+
+    iframe {
+      background-color: #fff;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 800px) {
+      #editorContainer {
+        flex-direction: column;
+        height: auto;
+      }
     }
   </style>
 </head>
@@ -90,6 +123,7 @@
   <h1>IEEE Document Editor</h1>
 
   <div id="controlBar">
+    <!-- <button id="backBtn">Back to Formatter</button> -->
     <button onclick="regenerateMarkdown()">Regenerate IEEE Markdown</button>
     <button onclick="downloadMarkdown()">Download Markdown</button>
   </div>
@@ -98,12 +132,10 @@
     <!-- LEFT: Editable structured content -->
     <div id="structuredEditor" class="panel"></div>
 
-    
     <!-- RIGHT: IEEE PDF Preview -->
     <div id="ieeePreview" class="panel">
       <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
     </div>
-
   </div>
 
   <script>
@@ -199,6 +231,11 @@
       a.click();
       URL.revokeObjectURL(url);
     }
+
+    // Back button functionality
+    // document.getElementById('backBtn').addEventListener('click', function() {
+    //   window.history.back();
+    // });
 
     // Initial render and preview
     renderEditableStructure();
