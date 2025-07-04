@@ -25,7 +25,7 @@ def suggest_titles(doc_data):
             input=prompt,
             text=True,
             capture_output=True,
-            timeout=60
+            timeout=180
         )
         output = result.stdout.strip()
 
