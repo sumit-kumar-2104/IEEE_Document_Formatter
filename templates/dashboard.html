@@ -1,159 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>User Dashboard</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #2e2e2e; /* dark background */
+      background: #1e1e1e;
       color: #f5f5f5;
-    }
-
-    .navbar {
-      background: #1c1c1c;
-      color: #f0b400;
-      padding: 1em;
-      text-align: center;
-      font-size: 1.5em;
-      font-weight: bold;
-      position: relative;
-      border-bottom: 2px solid #f0b400;
-      animation: slideDown 1s ease forwards;
-      opacity: 0;
-      transform: translateY(-30px);
-    }
-
-    @keyframes slideDown {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .logout-btn {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      padding: 0.5em 1em;
-      background: linear-gradient(135deg, #f0b400, #e69500);
-      color: black;
-      border: none;
-      border-radius: 0.5em;
-      cursor: pointer;
-      font-size: 0.8em;
-      font-weight: bold;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .logout-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(240, 180, 0, 0.4);
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 80vh;
-      animation: fadeIn 1s ease forwards;
-      opacity: 0;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
-    .card {
-      background: #1c1c1c;
+      font-family: Arial, sans-serif;
       padding: 2em;
-      border-radius: 1em;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-      border-top: 4px solid #f0b400;
-      border-bottom: 4px solid #f0b400;
-      transform: translateY(30px);
-      animation: slideUp 1s ease forwards;
-      opacity: 0;
     }
-
-    @keyframes slideUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .card h2 {
-      margin-bottom: 1em;
+    h1 {
       color: #f0b400;
     }
-
-    .card p {
-      margin-bottom: 1.5em;
-      color: #ccc;
+    .upload-history {
+      margin-top: 1em;
     }
-
+    .card {
+      background: #2a2a2a;
+      padding: 1em;
+      margin-bottom: 1em;
+      border-radius: 8px;
+      border-left: 4px solid #f0b400;
+    }
+    .card h3 {
+      margin: 0;
+    }
+    .card small {
+      color: #aaa;
+    }
     .btn {
-      padding: 1em 2em;
-      background: linear-gradient(135deg, #f0b400, #e69500);
-      color: black;
+      margin-top: 0.5em;
+      display: inline-block;
+      padding: 0.5em 1em;
+      background: #f0b400;
+      color: #000;
       border: none;
-      border-radius: 0.5em;
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: bold;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      margin: 0.5em;
+      border-radius: 4px;
+      text-decoration: none;
     }
-
     .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(240, 180, 0, 0.4);
+      background: #e69500;
     }
-
-    .btn-container {
+    .top-bar {
       display: flex;
-      flex-direction: column;
-      width: 100%;
+      justify-content: space-between;
+      align-items: center;
     }
   </style>
 </head>
 <body>
-  <div class="navbar">
-    User Dashboard
-    <button class="logout-btn" id="logoutButton">Logout</button>
+
+  <div class="top-bar">
+    <h1>Welcome to Your Dashboard</h1>
+    <a class="btn" href="/logout">Logout</a>
   </div>
 
-  <div class="container">
-    <div class="card">
-      <h2>Welcome to your Dashboard</h2>
-      <p>Click the button below to go to PDF to IEEE Converter</p>
-      <div class="btn-container">
-        <button class="btn" onclick="window.location.href='/index.html'">Go to Converter</button>
-      </div>
-    </div>
+  <div style="margin-top: 1em;">
+    <a class="btn" href="/index.html">Upload New Document</a>
   </div>
 
-  <script>
-    document.getElementById('logoutButton').addEventListener('click', function() {
-      // Make a GET request to the Flask logout route
-      fetch('/logout')
-        .then(response => {
-          if (response.redirected) {
-            window.location.href = response.url;  // Redirect to login page
-          }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-  </script>
+  <div class="upload-history">
+    <h2>Upload History</h2>
+    {% if uploads %}
+      {% for item in uploads %}
+        <div class="card">
+          <h3>{{ item.title }}</h3>
+          <small>File: {{ item.file_name }} | Uploaded: {{ item.parsed_on.strftime('%Y-%m-%d %H:%M') if item.parsed_on else '' }}</small><br>
+          <a class="btn" href="/resume/{{ item.temp_id }}">Resume Editing</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No uploads found.</p>
+    {% endif %}
+  </div>
+
 </body>
 </html>

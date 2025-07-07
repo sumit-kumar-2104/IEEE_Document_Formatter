@@ -4,17 +4,13 @@ import uuid
 import json
 import bcrypt
 from pymongo import MongoClient
+from datetime import datetime
 
-# ===========================================
-# 🔗 MongoDB setup
-# ===========================================
+# MongoDB Setup
 client = MongoClient("mongodb://localhost:27017/")
 db = client['authdb']
 users_collection = db['users']
 
-# ===========================================
-# 🔧 Folders setup
-# ===========================================
 UPLOAD_FOLDER = "uploads"
 TEMP_FOLDER = "temp_data"
 
@@ -26,95 +22,80 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 # ===========================================
-# 🔐 Signup Route
+# 🔐 Authentication routes
 # ===========================================
+
 @app.route('/signup', methods=['POST'])
 def signup():
-    try:
-        data = request.get_json()
-        print("Received data:", data)
+    data = request.get_json()
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+    phone = data.get('phone')
 
-        if not data:
-            raise ValueError("No data received from frontend")
+    if users_collection.find_one({'email': email}):
+        return jsonify({"success": False, "message": "User already exists"})
 
-        name = data.get('name')
-        email = data.get('email')
-        password = data.get('password')
-        phone = data.get('phone')
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    users_collection.insert_one({
+        "name": name,
+        "email": email,
+        "password": hashed_password,
+        "phone": phone,
+        "uploads": []  # empty history initially
+    })
 
-        if not all([name, email, password, phone]):
-            raise ValueError("Missing one or more required fields")
+    return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
 
-        if users_collection.find_one({'email': email}):
-            return jsonify({"success": False, "message": "User already exists"})
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        users_collection.insert_one({
-            "name": name,
-            "email": email,
-            "password": hashed_password,
-            "phone": phone
-        })
-
-        print("Signup successful for", email)
-        return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
-
-    except Exception as e:
-        print("🔥 SIGNUP ERROR:", str(e))
-        return jsonify({"success": False, "message": "Internal server error"}), 500
-
-# ===========================================
-# 🔐 Login Route
-# ===========================================
 @app.route('/login', methods=['POST'])
 def login():
-    try:
-        data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
 
-        if not email or not password:
-            return jsonify({"success": False, "message": "Email and Password required"}), 400
+    user = users_collection.find_one({"email": email})
+    if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
+        session['user'] = user['email']
+        return jsonify({'success': True, 'message': 'Login successful', 'redirect': '/dashboard'})
+    else:
+        return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
-        user = users_collection.find_one({"email": email})
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            session['user'] = email
-            return jsonify({"success": True, "message": "Login successful", "redirect": "/dashboard"})
-        else:
-            return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
-    except Exception as e:
-        print("Login Error:", str(e))
-        return jsonify({"success": False, "message": "Internal Server Error"}), 500
-
-# ===========================================
-# 🔐 Logout Route
-# ===========================================
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
 
+
 # ===========================================
-# 🌐 Page Routes
+# 🏠 Page Routes
 # ===========================================
+
 @app.route('/')
 def home():
     return redirect(url_for('login_page'))
 
 @app.route('/login.html')
 def login_page():
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
     return render_template('login.html')
 
 @app.route('/signup.html')
 def signup_page():
+    if 'user' in session:
+        return redirect(url_for('dashboard'))
     return render_template('signup.html')
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login_page'))
-    return render_template('dashboard.html')
+    
+    user = users_collection.find_one({"email": session["user"]})
+    uploads = user.get("uploads", [])
+    return render_template('dashboard.html', uploads=uploads)
 
 @app.route('/index.html')
 def index():
@@ -122,13 +103,16 @@ def index():
         return redirect(url_for('login_page'))
     return render_template('index.html')
 
+
 # ===========================================
-# 📤 File Upload and Processing
+# 🧠 Core Functionality
 # ===========================================
+
 from utils.parsers import parse_input_file
 from utils.title_suggested import suggest_titles
 from utils.llm_formatter import generate_ieee_markdown
 from utils.latex_formatter import generate_pdf_from_data
+
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -148,25 +132,55 @@ def upload():
             return jsonify({"error": parsed_data.get("error", "Unknown error")}), 400
 
         titles = suggest_titles(parsed_data)
-
         temp_id = str(uuid.uuid4())
+
         temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
         with open(temp_path, "w", encoding="utf-8") as f:
             json.dump(parsed_data, f, ensure_ascii=False, indent=2)
 
         session['temp_id'] = temp_id
 
+        # Save history in MongoDB
+        email = session['user']
+        uploads_entry = {
+            "file_name": uploaded_file.filename,
+            "temp_id": temp_id,
+            "parsed_on": datetime.utcnow(),
+            "title": titles[0] if titles else "Untitled"
+        }
+
+        users_collection.update_one(
+            {"email": email},
+            {"$push": {"uploads": uploads_entry}}
+        )
+
         return jsonify({
             "parsed": parsed_data,
             "suggested_titles": titles
         })
+
     except Exception as e:
-        print("Upload error:", str(e))
+        print("UPLOAD ERROR:", str(e))
         return jsonify({"error": "Internal server error"}), 500
 
-# ===========================================
-# 📝 Editor Page
-# ===========================================
+
+@app.route('/resume/<temp_id>')
+def resume(temp_id):
+    if 'user' not in session:
+        return redirect(url_for('login_page'))
+
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if not os.path.exists(temp_path):
+        return "Parsed document not found", 404
+
+    session['temp_id'] = temp_id
+
+    with open(temp_path, "r", encoding="utf-8") as f:
+        parsed_data = json.load(f)
+
+    return render_template('editor.html', parsed=parsed_data)
+
+
 @app.route('/editor')
 def editor():
     if 'user' not in session:
@@ -185,15 +199,16 @@ def editor():
 
     return render_template('editor.html', parsed=parsed_data)
 
-# ===========================================
-# 📄 Generate IEEE Markdown
-# ===========================================
+
 @app.route('/generate_ieee', methods=['POST'])
 def generate_ieee():
     if 'user' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
     temp_id = session.get('temp_id')
+    if not temp_id:
+        return jsonify({"error": "Missing parsed document data"}), 400
+
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
     if not os.path.exists(temp_path):
         return jsonify({"error": "Parsed document not found"}), 400
@@ -207,9 +222,7 @@ def generate_ieee():
     except Exception as e:
         return jsonify({"error": f"Error generating IEEE markdown: {str(e)}"}), 500
 
-# ===========================================
-# 📄 Generate PDF
-# ===========================================
+
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
     if 'user' not in session:
@@ -219,14 +232,13 @@ def generate_pdf():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
-    try:
-        result = generate_pdf_from_data(data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": f"Error generating PDF: {str(e)}"}), 500
+    result = generate_pdf_from_data(data)
+    return jsonify(result)
+
 
 # ===========================================
-# 🚀 Run Server
+# 🚀 Run the server
 # ===========================================
+
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True)
