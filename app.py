@@ -5,12 +5,18 @@ import json
 import bcrypt
 from pymongo import MongoClient
 from datetime import datetime
+from dateutil import parser
 
-# MongoDB Setup
+# ===========================================
+# 🔗 MongoDB setup
+# ===========================================
 client = MongoClient("mongodb://localhost:27017/")
 db = client['authdb']
 users_collection = db['users']
 
+# ===========================================
+# 🔧 Flask setup
+# ===========================================
 UPLOAD_FOLDER = "uploads"
 TEMP_FOLDER = "temp_data"
 
@@ -24,7 +30,6 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 # ===========================================
 # 🔐 Authentication routes
 # ===========================================
-
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -42,7 +47,7 @@ def signup():
         "email": email,
         "password": hashed_password,
         "phone": phone,
-        "uploads": []  # empty history initially
+        "uploads": []
     })
 
     return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
@@ -60,6 +65,11 @@ def login():
         return jsonify({'success': True, 'message': 'Login successful', 'redirect': '/dashboard'})
     else:
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+    
+    
+    
+
+    
 
 
 @app.route('/logout')
@@ -68,10 +78,10 @@ def logout():
     return redirect(url_for('login_page'))
 
 
+
 # ===========================================
 # 🏠 Page Routes
 # ===========================================
-
 @app.route('/')
 def home():
     return redirect(url_for('login_page'))
@@ -95,6 +105,16 @@ def dashboard():
     
     user = users_collection.find_one({"email": session["user"]})
     uploads = user.get("uploads", [])
+
+    # Convert parsed_on to datetime if it's a string
+    for u in uploads:
+        if "parsed_on" in u and isinstance(u["parsed_on"], str):
+            try:
+                u["parsed_on"] = parser.parse(u["parsed_on"])
+            except Exception as e:
+                print("Date parse error:", e)
+                u["parsed_on"] = None
+
     return render_template('dashboard.html', uploads=uploads)
 
 @app.route('/index.html')
@@ -103,16 +123,13 @@ def index():
         return redirect(url_for('login_page'))
     return render_template('index.html')
 
-
 # ===========================================
 # 🧠 Core Functionality
 # ===========================================
-
 from utils.parsers import parse_input_file
 from utils.title_suggested import suggest_titles
 from utils.llm_formatter import generate_ieee_markdown
 from utils.latex_formatter import generate_pdf_from_data
-
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -235,10 +252,29 @@ def generate_pdf():
     result = generate_pdf_from_data(data)
     return jsonify(result)
 
+@app.route('/delete_upload/<temp_id>', methods=['POST'])
+def delete_upload(temp_id):
+    if 'user' not in session:
+        return redirect(url_for('login_page'))
+
+    email = session['user']
+
+    # Remove upload entry from user's uploads array
+    users_collection.update_one(
+        {"email": email},
+        {"$pull": {"uploads": {"temp_id": temp_id}}}
+    )
+
+    # Delete the temp file
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
+
+    return redirect(url_for('dashboard'))
+
 
 # ===========================================
 # 🚀 Run the server
 # ===========================================
-
 if __name__ == "__main__":
     app.run(debug=True)
