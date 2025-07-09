@@ -181,6 +181,21 @@ def upload():
         return jsonify({"error": "Internal server error"}), 500
 
 
+# @app.route('/resume/<temp_id>')
+# def resume(temp_id):
+#     if 'user' not in session:
+#         return redirect(url_for('login_page'))
+
+#     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+#     if not os.path.exists(temp_path):
+#         return "Parsed document not found", 404
+
+#     session['temp_id'] = temp_id
+
+#     with open(temp_path, "r", encoding="utf-8") as f:
+#         parsed_data = json.load(f)
+
+#     return render_template('editor.html', parsed=parsed_data)
 @app.route('/resume/<temp_id>')
 def resume(temp_id):
     if 'user' not in session:
@@ -195,9 +210,28 @@ def resume(temp_id):
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
 
-    return render_template('editor.html', parsed=parsed_data)
+    # ✅ Pass a flag indicating this is from dashboard
+    return render_template('editor.html', parsed=parsed_data, from_dashboard=True)
 
 
+
+# @app.route('/editor')
+# def editor():
+#     if 'user' not in session:
+#         return redirect(url_for('login_page'))
+
+#     temp_id = session.get('temp_id')
+#     if not temp_id:
+#         return "Missing session data", 400
+
+#     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+#     if not os.path.exists(temp_path):
+#         return "Parsed document not found", 400
+
+#     with open(temp_path, "r", encoding="utf-8") as f:
+#         parsed_data = json.load(f)
+
+#     return render_template('editor.html', parsed=parsed_data)
 @app.route('/editor')
 def editor():
     if 'user' not in session:
@@ -214,7 +248,9 @@ def editor():
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
 
+    # ✅ No flag passed here
     return render_template('editor.html', parsed=parsed_data)
+
 
 
 @app.route('/generate_ieee', methods=['POST'])
