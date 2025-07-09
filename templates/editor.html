@@ -389,10 +389,21 @@
   </style>
 </head>
 <body>
-  <h1>IEEE Document Editor</h1>
+  
 
   <!-- ✅ Added top bar buttons -->
-  <div id="topBarButtons">
+  
+  <!-- <div id="topBarButtons" style="position: fixed; top: 20px; right: 20px; z-index: 999;">
+    <a href="/dashboard">
+      <button id="backDashboardBtn">← Back to Dashboard</button>
+    </a>
+    <a href="/logout">
+      <button id="logoutBtn">Logout</button>
+    </a>
+  </div> -->
+
+   {% if from_dashboard %}
+  <div id="topBarButtons" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
     <a href="/dashboard">
       <button id="backDashboardBtn">← Back to Dashboard</button>
     </a>
@@ -400,6 +411,19 @@
       <button id="logoutBtn">Logout</button>
     </a>
   </div>
+{% endif %}
+
+
+  <h1>IEEE Document Editor</h1>
+   <!-- <div id="topBarButtons" style="position: fixed; top: 20px; right: 20px; z-index: 999;">
+    <a href="/dashboard">
+      <button id="backDashboardBtn">← Back to Dashboard</button>
+    </a>
+    <a href="/logout">
+      <button id="logoutBtn">Logout</button>
+    </a>
+  </div> -->
+  
 
   <div id="controlBar">
     <!-- <button id="backBtn">Back to Formatter</button> -->
