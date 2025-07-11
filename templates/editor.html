@@ -1,249 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>IEEE Markdown Editor</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 1em;
-      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://source.unsplash.com/1600x900/?code,editor,workspace');
-      background-size: cover;
-      background-attachment: fixed;
-      color: #f5f5f5;
-      min-height: 100vh;
-    }
-
-    h1 {
-      text-align: left;
-      color: #ffb300;
-      font-size: 2.4em;
-      margin-bottom: 1em;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-
-    #editorContainer {
-      display: flex;
-      gap: 1em;
-      height: 85vh;
-    }
-
-    .panel {
-      flex: 1;
-      padding: 1em;
-      border-radius: 10px;
-      overflow-y: auto;
-      background-color: rgba(28, 28, 28, 0.95);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    }
-
-    #structuredEditor {
-      border-left: 6px solid #ffb300;
-    }
-
-    #ieeePreview {
-      white-space: pre-wrap;
-      border-left: 6px solid #757575;
-      background-color: rgba(40, 40, 40, 0.95);
-    }
-
-    .editable-heading {
-      font-weight: bold;
-      margin-top: 1em;
-      color: #ffca28;
-      font-size: 1.2em;
-    }
-
-    .editable-subheading {
-      font-weight: bold;
-      margin-top: 0.5em;
-      margin-left: 1em;
-      color: #fdd835;
-    }
-
-    .editable-para {
-      margin-left: 1.5em;
-      margin-bottom: 0.5em;
-      color: #f5f5f5;
-    }
-
-    [contenteditable]:focus {
-      outline: 2px dashed #ffb300;
-      background-color: rgba(255, 243, 224, 0.1);
-    }
-
-    button {
-      margin: 0.5em;
-      padding: 10px 20px;
-      background-color: #283593;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-      background-color: #1a237e;
-    }
-
-    #backBtn {
-      background: linear-gradient(45deg, #d32f2f, #b71c1c);
-    }
-
-    #backBtn:hover {
-      background: linear-gradient(45deg, #b71c1c, #8e0000);
-    }
-
-    #controlBar {
-      text-align: left;
-      margin-bottom: 1em;
-    }
-
-    iframe {
-      background-color: #fff;
-      border-radius: 6px;
-    }
-
-    @media (max-width: 800px) {
-      #editorContainer {
-        flex-direction: column;
-        height: auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  <h1>IEEE Document Editor</h1>
-
-  <div id="controlBar">
-    <<button id="backBtn">Back to Formatter</button> -->
-    <!-- <button onclick="regenerateMarkdown()">Regenerate IEEE Markdown</button>
-    <button onclick="downloadMarkdown()">Download Markdown</button>
-  </div>
-
-  <div id="editorContainer">
-    < LEFT: Editable structured content -->
-    <!-- <div id="structuredEditor" class="panel"></div> -->
-
-    <!-- RIGHT: IEEE PDF Preview -->
-    <!-- <div id="ieeePreview" class="panel">
-      <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
-    </div>
-  </div>  -->
-
-  <!-- <script>
-    const parsedData = {{ parsed | tojson }};
-    let debounceTimer;
-
-    function renderEditableStructure() {
-      const container = document.getElementById('structuredEditor');
-      container.innerHTML = '';
-
-      container.innerHTML += `<div class="editable-heading">Title</div>
-        <div class="editable-para" contenteditable="true" data-key="title">${parsedData.title || ''}</div>`;
-
-      if (parsedData.abstract)
-        container.innerHTML += `<div class="editable-heading">Abstract</div>
-        <div class="editable-para" contenteditable="true" data-key="abstract">${parsedData.abstract}</div>`;
-
-      if (parsedData.keywords)
-        container.innerHTML += `<div class="editable-heading">Keywords</div>
-        <div class="editable-para" contenteditable="true" data-key="keywords">${parsedData.keywords}</div>`;
-
-      (parsedData.sections || []).forEach((sec, i) => {
-        container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading">${sec.heading}</div>
-          <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content">${sec.content}</div>`;
-
-        (sec.subsections || []).forEach((sub, j) => {
-          container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading">${sub.heading}</div>
-            <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content">${sub.content}</div>`;
-        });
-      });
-
-      if (parsedData.references && parsedData.references.length > 0) {
-        container.innerHTML += `<div class="editable-heading">References</div>`;
-        parsedData.references.forEach((ref, i) => {
-          container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${ref}</div>`;
-        });
-      }
-
-      // Add input listener for all editable fields
-      document.querySelectorAll('[contenteditable]').forEach(el => {
-        el.addEventListener('input', () => {
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => {
-            captureEditedData();
-            regenerateMarkdown(); // Live preview refresh
-          }, 800); // debounce delay
-        });
-      });
-    }
-
-    function captureEditedData() {
-      document.querySelectorAll('[contenteditable]').forEach(el => {
-        const key = el.dataset.key;
-        const sec = el.dataset.sec;
-        const subsec = el.dataset.subsec;
-        const sub = el.dataset.sub;
-        const ref = el.dataset.ref;
-        const text = el.innerText.trim();
-
-        if (key) parsedData[key] = text;
-        else if (ref !== undefined) parsedData.references[ref] = text;
-        else if (sec !== undefined && subsec !== undefined) {
-          parsedData.sections[sec].subsections[subsec][sub] = text;
-        } else if (sec !== undefined) {
-          parsedData.sections[sec][sub] = text;
-        }
-      });
-    }
-
-    async function regenerateMarkdown() {
-      const res = await fetch('/generate_pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsedData)
-      });
-
-      const result = await res.json();
-      const iframe = document.getElementById('pdfFrame');
-      if (result.success) {
-        iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
-      } else {
-        iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
-      }
-    }
-
-    function downloadMarkdown() {
-      const text = document.getElementById('ieeePreview').textContent;
-      const blob = new Blob([text], { type: "text/markdown" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "ieee_formatted.md";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // Back button functionality
-    // document.getElementById('backBtn').addEventListener('click', function() {
-    //   window.history.back();
-    // });
-
-    // Initial render and preview
-    renderEditableStructure();
-    regenerateMarkdown();
-  </script>
-</body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -391,7 +145,7 @@
 <body>
   <h1>IEEE Document Editor</h1>
 
-  <!-- ✅ Added top bar buttons -->
+  <!-- Top bar buttons -->
   <div id="topBarButtons">
     <a href="/dashboard">
       <button id="backDashboardBtn">← Back to Dashboard</button>
@@ -402,16 +156,12 @@
   </div>
 
   <div id="controlBar">
-    <!-- <button id="backBtn">Back to Formatter</button> -->
     <button onclick="regenerateMarkdown()">Regenerate IEEE Markdown</button>
     <button onclick="downloadMarkdown()">Download Markdown</button>
   </div>
 
   <div id="editorContainer">
-    <!-- LEFT: Editable structured content -->
     <div id="structuredEditor" class="panel"></div>
-
-    <!-- RIGHT: IEEE PDF Preview -->
     <div id="ieeePreview" class="panel">
       <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
     </div>
@@ -453,14 +203,14 @@
         });
       }
 
-      // Add input listener for all editable fields
+      // Add input listener
       document.querySelectorAll('[contenteditable]').forEach(el => {
         el.addEventListener('input', () => {
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
             captureEditedData();
             regenerateMarkdown(); // Live preview refresh
-          }, 800); // debounce delay
+          }, 800);
         });
       });
     }
@@ -511,7 +261,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // Initial render and preview
     renderEditableStructure();
     regenerateMarkdown();
   </script>

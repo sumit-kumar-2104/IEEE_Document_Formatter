@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IEEE Dashboard</title>
+    <style>
+        body {
+            background-color: #1c1c1c;
+            color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 2em;
+        }
+
+        h1, h2 {
+            color: #ffb300;
+        }
+
+        .upload-btn, .btn-orange, .btn-red {
+            padding: 10px 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px 0 0;
+        }
+
+        .upload-btn {
+            background-color: #ffb300;
+            color: #000;
+        }
+
+        .btn-orange {
+            background-color: #ffa000;
+            color: #000;
+        }
+
+        .btn-red {
+            background-color: #e53935;
+            color: #fff;
+        }
+
+        .history-card {
+            background-color: #2c2c2c;
+            padding: 1em;
+            margin: 1em 0;
+            border-left: 5px solid #ffb300;
+            border-radius: 10px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2em;
+        }
+
+        .logout-btn, .dashboard-btn {
+            background-color: #ffb300;
+            color: black;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover, .dashboard-btn:hover {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    {% if show_dashboard_heading %}
+        <h1>Welcome to Your Dashboard</h1>
+        <a href="/logout"><button class="logout-btn">Logout</button></a>
+    {% else %}
+        <div>
+            <a href="/dashboard"><button class="dashboard-btn">← Back to Dashboard</button></a>
+            <a href="/logout"><button class="logout-btn">Logout</button></a>
+        </div>
+    {% endif %}
+</div>
+
+{% block content %}
+<!-- Page-specific content will be inserted here -->
+{% endblock %}
+
+</body>
+</html>

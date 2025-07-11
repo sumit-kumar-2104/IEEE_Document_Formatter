@@ -42,16 +42,23 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    input[type="file"] {
+    input[type="file"], select {
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
       transition: box-shadow 0.3s ease, transform 0.3s ease;
+      background-color: #424242;
+      color: #ffffff;
     }
 
-    input[type="file"]:hover {
+    input[type="file"]:hover, select:hover {
       box-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
       transform: scale(1.03);
+    }
+
+    select option {
+      background-color: #424242;
+      color: #ffffff;
     }
 
     button {
@@ -72,127 +79,9 @@
       box-shadow: 0 6px 15px rgba(0,0,0,0.5);
     }
 
-    #editorBtn, #backBtn {
-      background: linear-gradient(45deg, #6a1b9a, #4a148c);
-      margin: 20px 0;
-    }
-
-    #editorBtn:hover {
-      background: linear-gradient(45deg, #4a148c, #38006b);
-    }
-
-    #backBtn {
-      background: linear-gradient(45deg, #d32f2f, #b71c1c);
-    }
-
-    #backBtn:hover {
-      background: linear-gradient(45deg, #b71c1c, #8e0000);
-    }
-
-    .section {
-      border: 1px solid #444;
-      border-left: 6px solid #ffb300;
-      background-color: rgba(28, 28, 28, 0.95);
-      padding: 1em;
-      margin: 1.5em 0;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-      animation: fadeIn 1s ease-out;
-      max-width: 900px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .section-title,
-    .subsection-title {
-      color: #ffb300;
-    }
-
-    .section-block {
-      margin-bottom: 1.5em;
-      padding-bottom: 1em;
-      border-bottom: 1px dashed #888;
-    }
-
-    .subsection {
-      margin-left: 1.5em;
-      margin-top: 1em;
-      border-left: 3px solid #ffca28;
-      padding-left: 1em;
-      background-color: #424242;
-      border-radius: 6px;
-      padding: 0.5em 1em;
-    }
-
-    pre {
-      background-color: #212121;
-      padding: 1em;
-      overflow-x: auto;
-      border-radius: 8px;
-      box-shadow: inset 0 0 5px #000;
-      color: #e0e0e0;
-    }
-
-    ul#references {
-      list-style-type: square;
-      padding-left: 30px;
-    }
-
-    ul#references li {
-      margin-bottom: 0.5em;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    h2 {
-      border-bottom: 2px solid #ffb300;
-      padding-bottom: 5px;
-      margin-top: 2em;
-      color: #ffca28;
-      animation: fadeIn 1s ease-out;
-    }
-
-    p {
-      line-height: 1.7;
-      font-size: 1.05em;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      transition: box-shadow 0.3s ease;
-      background-color: #424242;
-      color: #ffffff;
-    }
-
-    select option {
-      background-color: #424242;
-      color: #ffffff;
-    }
-
-    select:hover {
-      box-shadow: 0 0 10px rgba(255, 179, 0, 0.3);
-    }
-
-    iframe {
-      width: 100%;
-      height: 85vh;
-      border: none;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-
     @media (max-width: 600px) {
       form { flex-direction: column; gap: 10px; }
-      button { width: 100%; }
+      button, input[type="file"], select { width: 100%; }
     }
   </style>
 </head>
@@ -200,140 +89,16 @@
   <h1>IEEE Document Formatter</h1>
 
   <form id="uploadForm" method="post" enctype="multipart/form-data">
+    <select name="template" id="templateSelector" required>
+      <option value="" disabled selected>Choose IEEE Template</option>
+      <option value="conference">IEEE Conference Template</option>
+      <option value="journal">IEEE Journal Template</option>
+      <option value="transactions">IEEE Transactions Template</option>
+      <option value="magazine">IEEE Magazine Template</option>
+    </select>
+
     <input type="file" name="file" accept=".pdf,.docx,.doc,.zip" required>
     <button type="submit">Upload</button>
   </form>
-
-  <div id="output" class="hidden">
-    <button id="editorBtn">Open in Markdown Editor</button>
-
-    <h2>Suggested Titles</h2>
-    <select id="titleOptions" class="section"></select>
-
-    <h2>Selected Title</h2>
-    <div id="title" class="section"></div>
-
-    <h2>Abstract</h2>
-    <div id="abstract" class="section"></div>
-
-    <h2>Keywords</h2>
-    <div id="keywords" class="section"></div>
-
-    <h2>Sections</h2>
-    <div id="sections" class="section"></div>
-
-    <h2>References</h2>
-    <ul id="references" class="section"></ul>
-
-    <h2>Raw Parsed JSON</h2>
-    <pre id="parsedOutput" class="section"></pre>
-  </div>
-
-  <div id="editorView" class="hidden">
-    <button id="backBtn">Back to Formatter</button>
-    <iframe id="editorFrame"></iframe>
-  </div>
-
-  <script>
-    let parsed = {};
-
-    document.getElementById('uploadForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(this);
-      const res = await fetch('/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await res.json();
-      parsed = data.parsed;
-      const suggestedTitles = data.suggested_titles || [];
-
-      document.getElementById('output').classList.remove('hidden');
-
-      const titleDropdown = document.getElementById('titleOptions');
-      const titleDiv = document.getElementById('title');
-      titleDropdown.innerHTML = '';
-
-      suggestedTitles.forEach(title => {
-        const opt = document.createElement('option');
-        opt.value = title;
-        opt.textContent = title;
-        titleDropdown.appendChild(opt);
-      });
-
-      if (suggestedTitles.length) {
-        titleDropdown.value = suggestedTitles[0];
-        titleDiv.textContent = suggestedTitles[0];
-      } else {
-        titleDiv.textContent = parsed.title || 'N/A';
-      }
-
-      titleDropdown.onchange = () => {
-        titleDiv.textContent = titleDropdown.value;
-      };
-
-      document.getElementById('abstract').textContent = parsed.abstract || 'N/A';
-      document.getElementById('keywords').textContent = parsed.keywords || 'N/A';
-
-      const sectionDiv = document.getElementById('sections');
-      sectionDiv.innerHTML = '';
-      (parsed.sections || []).forEach(section => {
-        const sectionBlock = document.createElement('div');
-        sectionBlock.className = 'section-block';
-
-        const heading = document.createElement('h3');
-        heading.textContent = section.heading || 'Untitled Section';
-        heading.className = 'section-title';
-        sectionBlock.appendChild(heading);
-
-        if (section.content) {
-          const content = document.createElement('p');
-          content.textContent = section.content;
-          sectionBlock.appendChild(content);
-        }
-
-        (section.subsections || []).forEach(sub => {
-          const subDiv = document.createElement('div');
-          subDiv.className = 'subsection';
-
-          const subTitle = document.createElement('h4');
-          subTitle.textContent = sub.heading || 'Untitled Subsection';
-          subTitle.className = 'subsection-title';
-          subDiv.appendChild(subTitle);
-
-          const subContent = document.createElement('p');
-          subContent.textContent = sub.content || '';
-          subDiv.appendChild(subContent);
-
-          sectionBlock.appendChild(subDiv);
-        });
-
-        sectionDiv.appendChild(sectionBlock);
-      });
-
-      const refList = document.getElementById('references');
-      refList.innerHTML = '';
-      (parsed.references || []).forEach(ref => {
-        const li = document.createElement('li');
-        li.textContent = ref.trim();
-        refList.appendChild(li);
-      });
-
-      document.getElementById('parsedOutput').textContent = JSON.stringify(parsed, null, 2);
-    });
-
-    document.getElementById('editorBtn').addEventListener('click', function () {
-      document.getElementById('output').classList.add('hidden');
-      document.getElementById('editorView').classList.remove('hidden');
-      document.getElementById('editorFrame').src = '/editor';
-    });
-
-    document.getElementById('backBtn').addEventListener('click', function () {
-      document.getElementById('editorView').classList.add('hidden');
-      document.getElementById('output').classList.remove('hidden');
-    });
-  </script>
 </body>
 </html>
