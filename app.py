@@ -2,10 +2,20 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import os
 import uuid
 import json
+import shutil
 import bcrypt
 from pymongo import MongoClient
 from datetime import datetime
 from dateutil import parser
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import os, uuid, json
+from datetime import datetime
+from utils.parsers import parse_input_file
+from utils.title_suggested import suggest_titles
+from utils.llm_formatter import generate_ieee_markdown
+from utils.latex_formatter import generate_pdf_from_data
+from werkzeug.utils import secure_filename
+
 
 # ===========================================
 # 🔗 MongoDB setup
@@ -20,7 +30,7 @@ users_collection = db['users']
 UPLOAD_FOLDER = "uploads"
 TEMP_FOLDER = "temp_data"
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.secret_key = 'dev-key-93c1745e3f2342c9bfa814bcdf2fd819'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -72,9 +82,12 @@ def logout():
     session.clear()
     return redirect(url_for('login_page'))
 
-# ===========================================
-# 🏠 Page Routes
-# ===========================================
+
+
+
+# ========================
+# 🌐 Page Routes
+# ========================
 @app.route('/')
 def home():
     return redirect(url_for('login_page'))
@@ -106,14 +119,9 @@ def index():
         return redirect(url_for('login_page'))
     return render_template('index.html')
 
-# ===========================================
-# 🧠 Core Functionality
-# ===========================================
-from utils.parsers import parse_input_file
-from utils.title_suggested import suggest_titles
-from utils.llm_formatter import generate_ieee_markdown
-from utils.latex_formatter import generate_pdf_from_data
-
+# ========================
+# 📤 File Upload + Parsing
+# ========================
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'user' not in session:
@@ -123,23 +131,59 @@ def upload():
     if not uploaded_file:
         return jsonify({"error": "No file uploaded"}), 400
 
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_file.filename)
+    # 🧾 Save uploaded file temporarily
+    filename = secure_filename(uploaded_file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     uploaded_file.save(file_path)
 
     try:
+        # 🧠 Parse the file (should extract text + image paths)
         parsed_data = parse_input_file(file_path)
         if not parsed_data or "error" in parsed_data:
             return jsonify({"error": parsed_data.get("error", "Unknown error")}), 400
 
+        # 🎯 Title suggestion
         titles = suggest_titles(parsed_data)
         temp_id = str(uuid.uuid4())
 
+        # 📁 Create static image folder for this document
+        image_folder = os.path.join("static", "images", temp_id)
+        os.makedirs(image_folder, exist_ok=True)
+
+        # ✅ Ensure all image paths are valid and convert to PNG
+        valid_images = []
+        for img in parsed_data.get("images", []):
+            original_path = img.get("path")
+            if not original_path or not os.path.exists(original_path):
+                continue
+
+            try:
+                ext = os.path.splitext(original_path)[1].lower()
+                basename = os.path.splitext(os.path.basename(original_path))[0]
+                new_path = os.path.join(image_folder, f"{basename}.png")
+
+                # Always convert using Pillow to ensure compatibility
+                with Image.open(original_path) as im:
+                    im.convert("RGB").save(new_path, "PNG")
+
+                img["path"] = f"/static/images/{temp_id}/{basename}.png"
+                valid_images.append(img)
+
+            except Exception as e:
+                print(f"[SKIP] Failed to process image {original_path}: {e}")
+                continue
+
+        parsed_data["images"] = valid_images
+
+        # 💾 Save parsed data to temp storage
         temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
         with open(temp_path, "w", encoding="utf-8") as f:
             json.dump(parsed_data, f, ensure_ascii=False, indent=2)
 
+        # 🔐 Save session token
         session['temp_id'] = temp_id
 
+        # 📚 Log upload in DB
         email = session['user']
         uploads_entry = {
             "file_name": uploaded_file.filename,
@@ -153,76 +197,15 @@ def upload():
             {"$push": {"uploads": uploads_entry}}
         )
 
-        return jsonify({
-            "parsed": parsed_data,
-            "suggested_titles": titles
-        })
+        return redirect(url_for("editor"))
 
     except Exception as e:
         print("UPLOAD ERROR:", str(e))
         return jsonify({"error": "Internal server error"}), 500
 
-
-# @app.route('/resume/<temp_id>')
-# def resume(temp_id):
-#     if 'user' not in session:
-#         return redirect(url_for('login_page'))
-
-#     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
-#     if not os.path.exists(temp_path):
-#         return "Parsed document not found", 404
-
-#     session['temp_id'] = temp_id
-
-#     with open(temp_path, "r", encoding="utf-8") as f:
-#         parsed_data = json.load(f)
-
-#     return render_template('editor.html', parsed=parsed_data)
-@app.route('/resume/<temp_id>')
-def resume(temp_id):
-    if 'user' not in session:
-        return redirect(url_for('login_page'))
-
-    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
-
-    if not os.path.exists(temp_path):
-        users_collection.update_one(
-            {"email": session["user"]},
-            {"$pull": {"uploads": {"temp_id": temp_id}}}
-        )
-        user = users_collection.find_one({"email": session["user"]})
-        uploads = user.get("uploads", [])
-        return render_template("dashboard.html", uploads=uploads, error="Parsed file not found. Please upload again.")
-
-    session['temp_id'] = temp_id
-
-    with open(temp_path, "r", encoding="utf-8") as f:
-        parsed_data = json.load(f)
-
-    # ✅ Pass a flag indicating this is from dashboard
-    return render_template('editor.html', parsed=parsed_data, from_dashboard=True)
-    markdown = parsed_data.get("edited_markdown")
-
-    return render_template("editor.html", parsed=parsed_data, saved_markdown=markdown, show_dashboard_heading=False)
-
-
-# @app.route('/editor')
-# def editor():
-#     if 'user' not in session:
-#         return redirect(url_for('login_page'))
-
-#     temp_id = session.get('temp_id')
-#     if not temp_id:
-#         return "Missing session data", 400
-
-#     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
-#     if not os.path.exists(temp_path):
-#         return "Parsed document not found", 400
-
-#     with open(temp_path, "r", encoding="utf-8") as f:
-#         parsed_data = json.load(f)
-
-#     return render_template('editor.html', parsed=parsed_data)
+# ========================
+# 📝 Editor View
+# ========================
 @app.route('/editor')
 def editor():
     if 'user' not in session:
@@ -239,11 +222,36 @@ def editor():
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
 
-    # ✅ No flag passed here
     return render_template('editor.html', parsed=parsed_data)
 
+# ========================
+# 🔁 Resume Editing
+# ========================
+@app.route('/resume/<temp_id>')
+def resume(temp_id):
+    if 'user' not in session:
+        return redirect(url_for('login_page'))
 
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if not os.path.exists(temp_path):
+        users_collection.update_one(
+            {"email": session["user"]},
+            {"$pull": {"uploads": {"temp_id": temp_id}}}
+        )
+        user = users_collection.find_one({"email": session["user"]})
+        uploads = user.get("uploads", [])
+        return render_template("dashboard.html", uploads=uploads, error="Parsed file not found. Please upload again.")
 
+    session['temp_id'] = temp_id
+    with open(temp_path, "r", encoding="utf-8") as f:
+        parsed_data = json.load(f)
+
+    markdown = parsed_data.get("edited_markdown")
+    return render_template("editor.html", parsed=parsed_data, saved_markdown=markdown, from_dashboard=True)
+
+# ========================
+# 📄 Markdown + PDF Gen
+# ========================
 @app.route('/generate_ieee', methods=['POST'])
 def generate_ieee():
     if 'user' not in session:
@@ -266,6 +274,7 @@ def generate_ieee():
     except Exception as e:
         return jsonify({"error": f"Error generating IEEE markdown: {str(e)}"}), 500
 
+
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
     if 'user' not in session:
@@ -275,12 +284,26 @@ def generate_pdf():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
-    result = generate_pdf_from_data(data)
-    return jsonify(result)
+    # Save the latest edited version to temp file
+    temp_id = session.get("temp_id")
+    if temp_id:
+        temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            return jsonify({"error": f"Failed to save temp data: {str(e)}"}), 500
 
-# ===========================================
-# 🗑 Delete Upload Route (GET + POST)
-# ===========================================
+    # Generate the PDF
+    try:
+        result = generate_pdf_from_data(data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
+
+# ========================
+# 🗑 Delete Upload
+# ========================
 @app.route('/delete_upload/<temp_id>', methods=['GET', 'POST'])
 def delete_upload(temp_id):
     if 'user' not in session:
@@ -300,6 +323,8 @@ def delete_upload(temp_id):
         os.remove(temp_path)
 
     return redirect(url_for("dashboard"))
+
+
 
 # ===========================================
 # 🚀 Run Server

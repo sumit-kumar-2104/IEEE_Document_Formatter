@@ -1,294 +1,165 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>IEEE Markdown Editor</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 1em;
-      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://source.unsplash.com/1600x900/?code,editor,workspace');
-      background-size: cover;
-      background-attachment: fixed;
-      color: #f5f5f5;
-      min-height: 100vh;
-    }
+{% extends "base_dashboard.html" %}
+{% block title %}IEEE Document Editor{% endblock %}
+{% block body_style %}
+background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://source.unsplash.com/1600x900/?latex,editor,ai');
+{% endblock %}
 
-    h1 {
-      text-align: left;
-      color: #ffb300;
-      font-size: 2.4em;
-      margin-bottom: 0.5em;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
+{% block content %}
+<h1 class="fadeInDown">IEEE Document Editor</h1>
 
-    #topBarButtons {
-      margin-bottom: 1em;
-    }
-
-    #topBarButtons button {
-      margin: 0.3em;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 1em;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    #topBarButtons button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-    }
-
-    #backDashboardBtn {
-      background-color: #f0b400;
-      color: #000;
-    }
-
-    #logoutBtn {
-      background-color: #d32f2f;
-      color: #fff;
-    }
-
-    #editorContainer {
-      display: flex;
-      gap: 1em;
-      height: 85vh;
-    }
-
-    .panel {
-      flex: 1;
-      padding: 1em;
-      border-radius: 10px;
-      overflow-y: auto;
-      background-color: rgba(28, 28, 28, 0.95);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    }
-
-    #structuredEditor {
-      border-left: 6px solid #ffb300;
-    }
-
-    #ieeePreview {
-      white-space: pre-wrap;
-      border-left: 6px solid #757575;
-      background-color: rgba(40, 40, 40, 0.95);
-    }
-
-    .editable-heading {
-      font-weight: bold;
-      margin-top: 1em;
-      color: #ffca28;
-      font-size: 1.2em;
-    }
-
-    .editable-subheading {
-      font-weight: bold;
-      margin-top: 0.5em;
-      margin-left: 1em;
-      color: #fdd835;
-    }
-
-    .editable-para {
-      margin-left: 1.5em;
-      margin-bottom: 0.5em;
-      color: #f5f5f5;
-    }
-
-    [contenteditable]:focus {
-      outline: 2px dashed #ffb300;
-      background-color: rgba(255, 243, 224, 0.1);
-    }
-
-    button {
-      margin: 0.5em;
-      padding: 10px 20px;
-      background-color: #283593;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-      background-color: #1a237e;
-    }
-
-    #controlBar {
-      text-align: left;
-      margin-bottom: 1em;
-    }
-
-    iframe {
-      background-color: #fff;
-      border-radius: 6px;
-    }
-
-    @media (max-width: 800px) {
-      #editorContainer {
-        flex-direction: column;
-        height: auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  
-
-  <!-- ✅ Added top bar buttons -->
-  
-  <!-- <div id="topBarButtons" style="position: fixed; top: 20px; right: 20px; z-index: 999;">
-    <a href="/dashboard">
-      <button id="backDashboardBtn">← Back to Dashboard</button>
-    </a>
-    <a href="/logout">
-      <button id="logoutBtn">Logout</button>
-    </a>
-  </div> -->
-
-   {% if from_dashboard %}
-  <div id="topBarButtons" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
-  <!-- Top bar buttons -->
-  <div id="topBarButtons">
-    <a href="/dashboard">
-      <button id="backDashboardBtn">← Back to Dashboard</button>
-    </a>
-    <a href="/logout">
-      <button id="logoutBtn">Logout</button>
-    </a>
-  </div>
+{% if from_dashboard %}
+<div id="topBarButtons" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
+  <a href="/dashboard">
+    <button class="dashboard-btn">← Back to Dashboard</button>
+  </a>
+  <a href="/logout">
+    <button class="logout-btn">Logout</button>
+  </a>
+</div>
 {% endif %}
 
+<div id="controlBar" style="margin-bottom: 1em;">
+  <button onclick="regenerateMarkdown()">🔄 Regenerate PDF</button>
+  <button onclick="downloadMarkdown()">⬇ Download Markdown</button>
+</div>
 
-  <h1>IEEE Document Editor</h1>
-   <!-- <div id="topBarButtons" style="position: fixed; top: 20px; right: 20px; z-index: 999;">
-    <a href="/dashboard">
-      <button id="backDashboardBtn">← Back to Dashboard</button>
-    </a>
-    <a href="/logout">
-      <button id="logoutBtn">Logout</button>
-    </a>
-  </div> -->
-  
+<div id="editorContainer" style="display: flex; gap: 1em; height: 85vh; flex-wrap: wrap;">
+  <!-- 📝 Editable Structured Content (Left Panel) -->
+  <div id="structuredEditor" class="panel" style="flex: 1; border-left: 6px solid #ffb300; overflow-y: auto;"></div>
 
-  <div id="controlBar">
-    <button onclick="regenerateMarkdown()">Regenerate IEEE Markdown</button>
-    <button onclick="downloadMarkdown()">Download Markdown</button>
+  <!-- 📄 LaTeX PDF Preview (Right Panel) -->
+  <div id="ieeePreview" class="panel" style="flex: 1; background-color: rgba(40, 40, 40, 0.95); border-left: 6px solid #757575;">
+    <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none; border-radius: 6px;"></iframe>
   </div>
+</div>
 
-  <div id="editorContainer">
-    <div id="structuredEditor" class="panel"></div>
-    <div id="ieeePreview" class="panel">
-      <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none;"></iframe>
-    </div>
-  </div>
+<script>
+  const parsedData = {{ parsed | tojson }};
+  let debounceTimer;
 
-  <script>
-    const parsedData = {{ parsed | tojson }};
-    let debounceTimer;
+  function renderContentWithImages(content) {
+    return content.replace(/\[IMAGE:\s*(.*?)\]/g, (match, path) => {
+      return `<div><img src="${path.trim()}" style="max-width: 100%; border: 2px solid #888; border-radius: 4px; margin: 10px 0;" /></div>`;
+    }).replace(/\n/g, '<br>');
+  }
 
-    function renderEditableStructure() {
-      const container = document.getElementById('structuredEditor');
-      container.innerHTML = '';
+  function renderEditableStructure() {
+    const container = document.getElementById('structuredEditor');
+    container.innerHTML = '';
 
-      container.innerHTML += `<div class="editable-heading">Title</div>
-        <div class="editable-para" contenteditable="true" data-key="title">${parsedData.title || ''}</div>`;
+    container.innerHTML += `<div class="editable-heading">Title</div>
+      <div class="editable-para" contenteditable="true" data-key="title">${parsedData.title || ''}</div>`;
 
-      if (parsedData.abstract)
-        container.innerHTML += `<div class="editable-heading">Abstract</div>
-        <div class="editable-para" contenteditable="true" data-key="abstract">${parsedData.abstract}</div>`;
+    if (parsedData.abstract)
+      container.innerHTML += `<div class="editable-heading">Abstract</div>
+      <div class="editable-para" contenteditable="true" data-key="abstract">${renderContentWithImages(parsedData.abstract)}</div>`;
 
-      if (parsedData.keywords)
-        container.innerHTML += `<div class="editable-heading">Keywords</div>
-        <div class="editable-para" contenteditable="true" data-key="keywords">${parsedData.keywords}</div>`;
+    if (parsedData.keywords)
+      container.innerHTML += `<div class="editable-heading">Keywords</div>
+      <div class="editable-para" contenteditable="true" data-key="keywords">${renderContentWithImages(parsedData.keywords)}</div>`;
 
-      (parsedData.sections || []).forEach((sec, i) => {
-        container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading">${sec.heading}</div>
-          <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content">${sec.content}</div>`;
+    (parsedData.sections || []).forEach((sec, i) => {
+      container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading">${sec.heading}</div>
+        <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content">${renderContentWithImages(sec.content)}</div>`;
 
-        (sec.subsections || []).forEach((sub, j) => {
-          container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading">${sub.heading}</div>
-            <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content">${sub.content}</div>`;
-        });
-      });
-
-      if (parsedData.references && parsedData.references.length > 0) {
-        container.innerHTML += `<div class="editable-heading">References</div>`;
-        parsedData.references.forEach((ref, i) => {
-          container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${ref}</div>`;
+      if (sec.images) {
+        sec.images.forEach((img, j) => {
+          container.innerHTML += `
+            <div class="image-block" style="margin: 10px 0;" data-sec="${i}" data-img="${j}">
+              <img src="${img.path}" style="max-width: 100%; max-height: 200px; display: block; margin-bottom: 5px;" />
+              <input type="text" class="image-caption" data-sec="${i}" data-img="${j}" value="${img.caption || ''}" placeholder="Caption..." style="width: 100%; margin-bottom: 5px;" />
+              <select class="image-size" data-sec="${i}" data-img="${j}" style="width: 100%;">
+                <option value="small" ${img.size === 'small' ? 'selected' : ''}>Small</option>
+                <option value="medium" ${img.size === 'medium' ? 'selected' : ''}>Medium</option>
+                <option value="large" ${img.size === 'large' ? 'selected' : ''}>Large</option>
+              </select>
+            </div>`;
         });
       }
 
-      // Add input listener
-      document.querySelectorAll('[contenteditable]').forEach(el => {
-        el.addEventListener('input', () => {
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => {
-            captureEditedData();
-            regenerateMarkdown(); // Live preview refresh
-          }, 800);
-        });
+      (sec.subsections || []).forEach((sub, j) => {
+        container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading">${sub.heading}</div>
+          <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content">${renderContentWithImages(sub.content)}</div>`;
+      });
+    });
+
+    if (parsedData.references && parsedData.references.length > 0) {
+      container.innerHTML += `<div class="editable-heading">References</div>`;
+      parsedData.references.forEach((ref, i) => {
+        container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${renderContentWithImages(ref)}</div>`;
       });
     }
 
-    function captureEditedData() {
-      document.querySelectorAll('[contenteditable]').forEach(el => {
-        const key = el.dataset.key;
-        const sec = el.dataset.sec;
-        const subsec = el.dataset.subsec;
-        const sub = el.dataset.sub;
-        const ref = el.dataset.ref;
-        const text = el.innerText.trim();
-
-        if (key) parsedData[key] = text;
-        else if (ref !== undefined) parsedData.references[ref] = text;
-        else if (sec !== undefined && subsec !== undefined) {
-          parsedData.sections[sec].subsections[subsec][sub] = text;
-        } else if (sec !== undefined) {
-          parsedData.sections[sec][sub] = text;
-        }
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      el.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          captureEditedData();
+          regenerateMarkdown();
+        }, 800);
       });
-    }
+    });
+  }
 
-    async function regenerateMarkdown() {
-      const res = await fetch('/generate_pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsedData)
-      });
+  function captureEditedData() {
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      const key = el.dataset.key;
+      const sec = el.dataset.sec;
+      const subsec = el.dataset.subsec;
+      const sub = el.dataset.sub;
+      const ref = el.dataset.ref;
+      const text = el.innerText.trim();
 
-      const result = await res.json();
-      const iframe = document.getElementById('pdfFrame');
-      if (result.success) {
-        iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
-      } else {
-        iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
+      if (key) parsedData[key] = text;
+      else if (ref !== undefined) parsedData.references[ref] = text;
+      else if (sec !== undefined && subsec !== undefined) {
+        parsedData.sections[sec].subsections[subsec][sub] = text;
+      } else if (sec !== undefined) {
+        parsedData.sections[sec][sub] = text;
       }
-    }
+    });
 
-    function downloadMarkdown() {
-      const text = document.getElementById('ieeePreview').textContent;
-      const blob = new Blob([text], { type: "text/markdown" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "ieee_formatted.md";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+    document.querySelectorAll('.image-caption').forEach(el => {
+      const sec = el.dataset.sec;
+      const img = el.dataset.img;
+      parsedData.sections[sec].images[img].caption = el.value.trim();
+    });
 
-    renderEditableStructure();
-    regenerateMarkdown();
-  </script>
-</body>
-</html>
+    document.querySelectorAll('.image-size').forEach(el => {
+      const sec = el.dataset.sec;
+      const img = el.dataset.img;
+      parsedData.sections[sec].images[img].size = el.value;
+    });
+  }
+
+  async function regenerateMarkdown() {
+    const res = await fetch('/generate_pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsedData)
+    });
+
+    const result = await res.json();
+    const iframe = document.getElementById('pdfFrame');
+    if (result.success) {
+      iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
+    } else {
+      iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
+    }
+  }
+
+  function downloadMarkdown() {
+    const text = document.getElementById('ieeePreview').textContent;
+    const blob = new Blob([text], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ieee_formatted.md";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  renderEditableStructure();
+  regenerateMarkdown();
+</script>
+{% endblock %}

@@ -1,5 +1,8 @@
 import docx
 import re
+import os
+from uuid import uuid4
+import base64
 
 COMMON_SECTIONS = [
     "introduction", "literature review", "related work", "methodology",
@@ -28,6 +31,19 @@ def extract_heading_level(text):
     match = re.match(r'^(\d+(\.\d+)*)(\.|\))?\s+', text)
     return match.group(1) if match else None
 
+def save_image_run(run, image_dir, prefix="img"):
+    if run._element.xpath('.//pic:pic'):
+        image_part = run._inline.graphic.graphicData.pic.blipFill.blip.embed
+        rel = run.part.related_parts[image_part]
+        img_bytes = rel.blob
+        image_id = uuid.uuid4().hex[:8]
+        image_path = os.path.join(image_dir, f"{prefix}_{image_id}.png")
+        with open(image_path, "wb") as img_file:
+            img_file.write(img_bytes)
+        return image_path
+    return None
+
+
 def parse_docx(path):
     doc = docx.Document(path)
 
@@ -47,8 +63,29 @@ def parse_docx(path):
     author_block_ended = False
     author_detected = False
 
+    # Prepare directory for saving images
+    image_dir = f'static/images/{uuid4().hex[:8]}'
+    os.makedirs(image_dir, exist_ok=True)
+
     for para in doc.paragraphs:
-        text = para.text.strip()
+        full_text = ""
+        for run in para.runs:
+            if run.text:
+                full_text += run.text
+
+            # Check for images in the run
+            if run.element.xpath(".//pic:pic"):
+                rels = run.part.rels
+                for rel in rels.values():
+                    if hasattr(rel._target, 'blob'):
+                        image_id = str(uuid4())[:8]
+                        image_path = os.path.join(image_dir, f"{image_id}.png")
+                        with open(image_path, "wb") as img_file:
+                            img_file.write(rel._target.blob)
+                        full_text += f' [IMAGE: /{image_path.replace("\\", "/")}] '
+                        break
+
+        text = full_text.strip()
         if not text:
             continue
 
@@ -95,7 +132,6 @@ def parse_docx(path):
         # --- References ---
         if any(text.lower().startswith(r) for r in REFERENCE_HEADERS):
             in_references = True
-            # Finalize current section
             if current_subsection and current_section:
                 current_section["subsections"].append(current_subsection)
                 current_subsection = None
@@ -112,7 +148,6 @@ def parse_docx(path):
         level = extract_heading_level(text)
         if is_possible_heading(text) and not in_abstract and not in_references:
             if level and '.' in level:
-                # Subsection
                 if current_subsection:
                     current_section["subsections"].append(current_subsection)
                 current_subsection = {
@@ -120,7 +155,6 @@ def parse_docx(path):
                     "content": ""
                 }
             else:
-                # Section
                 if current_subsection and current_section:
                     current_section["subsections"].append(current_subsection)
                     current_subsection = None
@@ -139,7 +173,6 @@ def parse_docx(path):
         elif current_section:
             current_section["content"] += text + " "
 
-    # --- Finalize Remaining Sections ---
     if current_subsection and current_section:
         current_section["subsections"].append(current_subsection)
     if current_section:

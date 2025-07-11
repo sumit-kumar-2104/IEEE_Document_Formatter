@@ -1,102 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>IEEE Document Formatter</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 2em;
-      min-height: 100vh;
-      background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0,0,0,0.7)), url('https://source.unsplash.com/1600x900/?code,workspace,ai');
-      background-size: cover;
-      background-attachment: fixed;
-      color: #f5f5f5;
-    }
+{% extends "base_dashboard.html" %}
+{% block title %}IEEE Document Formatter{% endblock %}
+{% block body_style %}
+background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0,0,0,0.7)), url('https://source.unsplash.com/1600x900/?code,workspace,ai');
+{% endblock %}
 
-    h1 {
-      color: #ffb300;
-      margin-bottom: 30px;
-      font-size: 2.8em;
-      text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
-      animation: fadeInDown 1s ease-out;
-    }
+{% block content %}
+  <h1 class="fadeInDown">IEEE Document Formatter</h1>
 
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    form {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    input[type="file"], select {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-      background-color: #424242;
-      color: #ffffff;
-    }
-
-    input[type="file"]:hover, select:hover {
-      box-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
-      transform: scale(1.03);
-    }
-
-    select option {
-      background-color: #424242;
-      color: #ffffff;
-    }
-
-    button {
-      background: linear-gradient(45deg, #283593, #1a237e);
-      color: white;
-      padding: 12px 25px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.5);
-    }
-
-    @media (max-width: 600px) {
-      form { flex-direction: column; gap: 10px; }
-      button, input[type="file"], select { width: 100%; }
-    }
-  </style>
-</head>
-<body>
-  <body>
-  <div style="position: absolute; top: 20px; right: 20px;">
-    <a href="/dashboard" style="margin-right: 10px; text-decoration: none; background: #ffb300; color: black; padding: 10px 15px; border-radius: 5px; font-weight: bold;">Back to Dashboard</a>
-    <a href="/logout" style="text-decoration: none; background: #d32f2f; color: white; padding: 10px 15px; border-radius: 5px; font-weight: bold;">Logout</a>
-  </div>
-
-  
-
-  <h1>IEEE Document Formatter</h1>
-
-  <form id="uploadForm" method="post" enctype="multipart/form-data">
+  <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data" class="fadeInUp">
     <select name="template" id="templateSelector" required>
       <option value="" disabled selected>Choose IEEE Template</option>
       <option value="conference">IEEE Conference Template</option>
@@ -108,5 +19,4 @@
     <input type="file" name="file" accept=".pdf,.docx,.doc,.zip" required>
     <button type="submit">Upload</button>
   </form>
-</body>
-</html>
+{% endblock %}
