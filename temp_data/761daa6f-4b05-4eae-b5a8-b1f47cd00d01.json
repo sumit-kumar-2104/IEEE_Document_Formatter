@@ -1,10 +1,11 @@
 {
   "abstract": "Bitter gourd is an important cucurbitaceous vegetable widely grown in India and other tropical and subtropical regions and appreciated for its nutritional, medicinal, and economic values. Traditional way of detecting diseases and nutrient deficiencies in bitter gourd leaves requires significant effort and expertise whereas, precision farming and automated disease detection methods can greatly support farmers by facilitating sustainable agriculture To address this challenge a novel web based application AgriCure was developed which incorporated a multilevel approach to detect the plant disease and nutrient deficiency with high level. It uses a hybrid augmentation-based YOLOv8 DL model for image analysis. The study focuses on detecting diseases like Downy Mildew, Leaf Spot, and Jassid, as well as nutrient deficiencies such as Potassium, Magnesium, and Nitrogen Deficiency and their combinations. The initial dataset of 785 images was increased to 6396 images using advanced data augmentation. The results on the augmented dataset after 100 epochs demonstrated high effectiveness with the augmented dataset. The model achieved an impressive mean Average Precision (mAP50) of 97.0% at an Intersection over Union (IoU) threshold of 0.50 and a mAP50-95 of 94.5% across IoU thresholds from 0.50 to 0.95. Nearly all predicted positive instances were true positives, with a precision rate of 91.8% and a recall of 90.2%, which showed the capacity of the model in identifying true positives. The F1 score of 94.7 highlighted balanced performance of the model between precision and recall, emphasising its reliability and accuracy. The model shows low losses, with a Box loss of 0.1405, a Class loss of 0.1116, and a Distribution Focal Loss (dfl loss) of 0.8192. This approach offered a valuable tool for early and accurate detection of disease and nutrient deficiency. Detection results indicate that, compared to previous methods, the proposed approach significantly improves overall performance and addresses challenges tied to limited dataset sizes. ",
+  "images": [],
   "keywords": "Bitter gourd, Disease detection, Nutrient deficiency detection, YOLOv8, Layered augmentation, Deep learning",
   "references": [],
   "sections": [
     {
-      "content": "[IMAGE: /static/images/62502ef3/07b8a3be.png] ",
+      "content": "[IMAGE: /static/images/9c1e23ef/abf918a8.png] ",
       "heading": "Graphical Abstract",
       "subsections": []
     },
@@ -24,7 +25,7 @@
       "subsections": []
     },
     {
-      "content": "The OLID dataset contained 4,749 images of different diseases of various species of plants in the state, mainly nutritional deficiencies, insect attacks, and a healthy state of the plant leaf. Specifically, this research is guided by detecting these issues in the Bitter gourd plant species, thereby extracting 785 images of healthy leaves damaged due to nutrient-related issues and insect-affected leaves. The dataset from which this was extracted had two types of diseases that affected the plants, namely Downy Mildew and Leaf Spot, and one type of insect that affected the plants, namely Jassid. In addition, plants suffered from five nutrition deficiencies: potassium, potassium and magnesium, nitrogen and potassium, and nitrogen and magnesium. Roboflow was used to ease and perfect preprocessing, augmentation, and labelling images. Detailed information about the labels is shown in Figure 1, whereas Table 1 provides an overview of the classes and their sample sizes. [IMAGE: /static/images/62502ef3/7ae9739c.png] Figure 1: Dataset visualisations for bitter gourd leaf classification, including class distribution (top-left), bounding box patterns (top-right), and scatter plots of object centroids (bottom-left) and aspect ratios (bottom-right). Table 1: Bitter gourd leaf dataset classification ",
+      "content": "The OLID dataset contained 4,749 images of different diseases of various species of plants in the state, mainly nutritional deficiencies, insect attacks, and a healthy state of the plant leaf. Specifically, this research is guided by detecting these issues in the Bitter gourd plant species, thereby extracting 785 images of healthy leaves damaged due to nutrient-related issues and insect-affected leaves. The dataset from which this was extracted had two types of diseases that affected the plants, namely Downy Mildew and Leaf Spot, and one type of insect that affected the plants, namely Jassid. In addition, plants suffered from five nutrition deficiencies: potassium, potassium and magnesium, nitrogen and potassium, and nitrogen and magnesium. Roboflow was used to ease and perfect preprocessing, augmentation, and labelling images. Detailed information about the labels is shown in Figure 1, whereas Table 1 provides an overview of the classes and their sample sizes. [IMAGE: /static/images/9c1e23ef/61932701.png] Figure 1: Dataset visualisations for bitter gourd leaf classification, including class distribution (top-left), bounding box patterns (top-right), and scatter plots of object centroids (bottom-left) and aspect ratios (bottom-right). Table 1: Bitter gourd leaf dataset classification ",
       "heading": "Dataset",
       "subsections": []
     },
@@ -44,7 +45,7 @@
       "subsections": []
     },
     {
-      "content": "In our study, the original dataset consisted of 785 images of leaves across nine distinct classes: Healthy (H), Downy Mildew (DM), Leaf Spot (LS), Jassid (JAS), Potassium and Magnesium Deficiency (K Mg), Nitrogen Deficiency (N), Nitrogen and Potassium Deficiency (N K), Nitrogen and Magnesium Deficiency (N Mg), and Potassium Deficiency (K).The dataset was first split into 70:30 for train and test. To ensure an unbiased evaluation of model performance as shown in Figure 2, the 30% test dataset was kept as untouched. The remaining 70% portion of dataset was used for train and validation subset and used for further augmentation. However, some classes were underrepresented in comparison to others, making it necessary to balance the dataset prior to applying augmentation. To address this, horizontal and vertical flipping with a 50% probability for each was applied to the underrepresented classes, effectively equalizing the number of images across all nine categories. This balancing step increased the dataset from 785 images to 1,492, represented in Figure 3. Following the balancing process, data augmentation was applied uniformly to all classes to expand the dataset further. This augmentation increased the dataset size from 1,492 images to 6,396 images. The proposed augmentation techniques improve model generalization by artificially increasing the training data while preserving the essential features of the image. [IMAGE: /static/images/62502ef3/bb90edda.png] Figure 2: Dataset processing steps and the splitting of dataset initially into 70:30 ration in train and test and later combining after a series of processes in the ratio of 81:15:4 for Train, Valid, Test respectively. The steps of augmentation were as follows: Rotation by 90°: Images were rotated by 90° clockwise, 90° counterclockwise, or 180° (upside down). Saturation adjustment: After rotation, to simulate variations in lighting and environmental conditions, the saturation was adjusted between -25% and +25%. Salt and pepper noise: Finally, 0.1% of the pixels of salt-and-pepper noise were added, which is a type of stochastic noise that can occur in real-world data collection processes, such as sensor noise or environmental factors. When the size of the dataset is low, the augmentation caters for the problem of overfitting and enhances the robustness of the model. it further improves the generalization by exposing the model to different transformations on the original dataset. Each augmentation technique was selected based on its ability to simulate real-world variations while retaining the essential features of the leaf images. Their impact on performance metrics further demonstrates the importance of these augmentation techniques. Table 4 shows the effect of each technique on the mean Average Precision at 50% Intersection over Union (mAP50) over 100 epochs. As illustrated in Table 4, the introduction of techniques like noise significantly boosted the performance of the model, increasing mAP50 from 0.698 (without augmentation) to 0.945 when both saturation and noise were applied. Table 4: Effect of various augmentations on map50 scores across 100 epochs While the initial dataset used in this study is relatively small, extensive augmentation increased it from 785 to 6,396 images, simulating real-world variability in lighting, orientation, and environmental conditions. Augmentation techniques like random rotation, saturation,  and noise have been proven to enhance model robustness in agricultural disease detection [47]. Although augmentation improves generalization, future research will explore synthetic data generation using GANs or integrating external datasets to expand data diversity [48]. [IMAGE: /static/images/62502ef3/69660770.png] Figure 3: The proposed model for data augmentation with different operations like  90° rotation (clockwise/counterclockwise), saturation variation (-25% to +25%), salt and pepper noise (up to 0.5%) and dataset balancing approach As shown in Figure 3, each image in the dataset was processed sequentially through a layered augmentation pipeline. The use of augmentations such as rotation, saturation, and noise were informed by their ability to increase variance in a way that preserves critical image features, ultimately enhancing the learning capability of the model. This pipeline was designed to expose the model to various forms of transformations while maintaining the underlying structure of the data, leading to improved performance across all metrics. ",
+      "content": "In our study, the original dataset consisted of 785 images of leaves across nine distinct classes: Healthy (H), Downy Mildew (DM), Leaf Spot (LS), Jassid (JAS), Potassium and Magnesium Deficiency (K Mg), Nitrogen Deficiency (N), Nitrogen and Potassium Deficiency (N K), Nitrogen and Magnesium Deficiency (N Mg), and Potassium Deficiency (K).The dataset was first split into 70:30 for train and test. To ensure an unbiased evaluation of model performance as shown in Figure 2, the 30% test dataset was kept as untouched. The remaining 70% portion of dataset was used for train and validation subset and used for further augmentation. However, some classes were underrepresented in comparison to others, making it necessary to balance the dataset prior to applying augmentation. To address this, horizontal and vertical flipping with a 50% probability for each was applied to the underrepresented classes, effectively equalizing the number of images across all nine categories. This balancing step increased the dataset from 785 images to 1,492, represented in Figure 3. Following the balancing process, data augmentation was applied uniformly to all classes to expand the dataset further. This augmentation increased the dataset size from 1,492 images to 6,396 images. The proposed augmentation techniques improve model generalization by artificially increasing the training data while preserving the essential features of the image. [IMAGE: /static/images/9c1e23ef/8a87cfba.png] Figure 2: Dataset processing steps and the splitting of dataset initially into 70:30 ration in train and test and later combining after a series of processes in the ratio of 81:15:4 for Train, Valid, Test respectively. The steps of augmentation were as follows: Rotation by 90°: Images were rotated by 90° clockwise, 90° counterclockwise, or 180° (upside down). Saturation adjustment: After rotation, to simulate variations in lighting and environmental conditions, the saturation was adjusted between -25% and +25%. Salt and pepper noise: Finally, 0.1% of the pixels of salt-and-pepper noise were added, which is a type of stochastic noise that can occur in real-world data collection processes, such as sensor noise or environmental factors. When the size of the dataset is low, the augmentation caters for the problem of overfitting and enhances the robustness of the model. it further improves the generalization by exposing the model to different transformations on the original dataset. Each augmentation technique was selected based on its ability to simulate real-world variations while retaining the essential features of the leaf images. Their impact on performance metrics further demonstrates the importance of these augmentation techniques. Table 4 shows the effect of each technique on the mean Average Precision at 50% Intersection over Union (mAP50) over 100 epochs. As illustrated in Table 4, the introduction of techniques like noise significantly boosted the performance of the model, increasing mAP50 from 0.698 (without augmentation) to 0.945 when both saturation and noise were applied. Table 4: Effect of various augmentations on map50 scores across 100 epochs While the initial dataset used in this study is relatively small, extensive augmentation increased it from 785 to 6,396 images, simulating real-world variability in lighting, orientation, and environmental conditions. Augmentation techniques like random rotation, saturation,  and noise have been proven to enhance model robustness in agricultural disease detection [47]. Although augmentation improves generalization, future research will explore synthetic data generation using GANs or integrating external datasets to expand data diversity [48]. [IMAGE: /static/images/9c1e23ef/ce05d3ed.png] Figure 3: The proposed model for data augmentation with different operations like  90° rotation (clockwise/counterclockwise), saturation variation (-25% to +25%), salt and pepper noise (up to 0.5%) and dataset balancing approach As shown in Figure 3, each image in the dataset was processed sequentially through a layered augmentation pipeline. The use of augmentations such as rotation, saturation, and noise were informed by their ability to increase variance in a way that preserves critical image features, ultimately enhancing the learning capability of the model. This pipeline was designed to expose the model to various forms of transformations while maintaining the underlying structure of the data, leading to improved performance across all metrics. ",
       "heading": "Proposed data augmentation process",
       "subsections": []
     },
@@ -54,17 +55,17 @@
       "subsections": []
     },
     {
-      "content": "In this study, we developed a web-based application, AgriCure, to create a user-friendly platform for plant disease detection, as depicted in Figure 5. The application begins with a login or signup page that allows users to access their accounts securely. The login page has an option to select the plant. The user can upload or capture an image from a smart smartphone through a web browser and upload the image to the model. An object rejection model further rejects the image if it is not a leaf and filters out non-plant images, such as those containing humans or unrelated objects. Then Plant Detection Model which identifies that the input image is a valid plant image or invalid test case such as a green screen or unrelated object. Further, the proposed model ensures that only a high-confidence image with a precision threshold above 75% will proceed further to the disease detection model. To determine optimal confidence threshold value for the proposed model a comprehensive analysis of key metrics was done on a test dataset (LINK) made specifically for threshold calculations of the model. It consists of mixture of test plant images and unrelated random object images, the metrics for calculating threshold included precision, recall, F1 score, accuracy, false positive rate, and false negative rate as shown in the Figure 4. The analysis was done on various threshold ranging from 0.10 to 1.0 at the interval of every 0.05 and the results indicated that the threshold value of 0.75 that is 75% strikes the best balance offering a meeting point of precision, recall, F1 score, accuracy. Most importantly at this threshold, the false negative value which is crucial in multi layered pipeline is very low after 75% the false negative values increases at a high pace. Therefore, applying a threshold of 75%, the model  ensures the real-life applicability and ensure only high confidence, truly plant related images proceed further which improves the  reliability of the system and reducing the risk of misinformation in critical decision making of agricultural practices. The proposed model further identifies plant diseases or nutrient deficiencies, such as downy mildew, leaf spot, and Jassid, as well as deficiencies in potassium, magnesium, or nitrogen. If a disease is detected, users are provided with an option to learn more about the disease. This redirects them to an information page containing detailed insights into the identified disease, including its symptoms, causes, and potential management practices. The AgriCure web application seamlessly integrates advanced YOLOv8 technology with an intuitive design, providing a reliable tool for farmers and researchers to diagnose plant health efficiently. The link to the application is provided in the data availability section. [IMAGE: /static/images/62502ef3/5f8facea.png] Figure 4. Threshold sensitivity analysis for precision plant validation model on the basis of metrics Precision, Recall, F1 Score, Accuracy, false Positive, False Negative [IMAGE: /static/images/62502ef3/14c16282.png] Figure 5: The deployment of a web application Integrated with the Yolov8 model and with the integration of 2 separate object detection and plant detection models. It depicts different stages of App Home, Login/Signup, Selecting Plant to detect, Selecting picture of the plant, Results, which if the plant is not present will return “No”, and if the plant is present will return the disease present in it with details of it. ",
+      "content": "In this study, we developed a web-based application, AgriCure, to create a user-friendly platform for plant disease detection, as depicted in Figure 5. The application begins with a login or signup page that allows users to access their accounts securely. The login page has an option to select the plant. The user can upload or capture an image from a smart smartphone through a web browser and upload the image to the model. An object rejection model further rejects the image if it is not a leaf and filters out non-plant images, such as those containing humans or unrelated objects. Then Plant Detection Model which identifies that the input image is a valid plant image or invalid test case such as a green screen or unrelated object. Further, the proposed model ensures that only a high-confidence image with a precision threshold above 75% will proceed further to the disease detection model. To determine optimal confidence threshold value for the proposed model a comprehensive analysis of key metrics was done on a test dataset (LINK) made specifically for threshold calculations of the model. It consists of mixture of test plant images and unrelated random object images, the metrics for calculating threshold included precision, recall, F1 score, accuracy, false positive rate, and false negative rate as shown in the Figure 4. The analysis was done on various threshold ranging from 0.10 to 1.0 at the interval of every 0.05 and the results indicated that the threshold value of 0.75 that is 75% strikes the best balance offering a meeting point of precision, recall, F1 score, accuracy. Most importantly at this threshold, the false negative value which is crucial in multi layered pipeline is very low after 75% the false negative values increases at a high pace. Therefore, applying a threshold of 75%, the model  ensures the real-life applicability and ensure only high confidence, truly plant related images proceed further which improves the  reliability of the system and reducing the risk of misinformation in critical decision making of agricultural practices. The proposed model further identifies plant diseases or nutrient deficiencies, such as downy mildew, leaf spot, and Jassid, as well as deficiencies in potassium, magnesium, or nitrogen. If a disease is detected, users are provided with an option to learn more about the disease. This redirects them to an information page containing detailed insights into the identified disease, including its symptoms, causes, and potential management practices. The AgriCure web application seamlessly integrates advanced YOLOv8 technology with an intuitive design, providing a reliable tool for farmers and researchers to diagnose plant health efficiently. The link to the application is provided in the data availability section. [IMAGE: /static/images/9c1e23ef/975ea3eb.png] Figure 4. Threshold sensitivity analysis for precision plant validation model on the basis of metrics Precision, Recall, F1 Score, Accuracy, false Positive, False Negative [IMAGE: /static/images/9c1e23ef/eb991814.png] Figure 5: The deployment of a web application Integrated with the Yolov8 model and with the integration of 2 separate object detection and plant detection models. It depicts different stages of App Home, Login/Signup, Selecting Plant to detect, Selecting picture of the plant, Results, which if the plant is not present will return “No”, and if the plant is present will return the disease present in it with details of it. ",
       "heading": "Development of a web application",
       "subsections": []
     },
     {
-      "content": "The performance of the model was evaluated using several metrics to assess its accuracy in detecting and classifying different leaf conditions. The primary metrics used include precision, recall, F1 score, mAP. These metrics are calculated based on fundamental parameters such as True Positives (TP), False Positives (FP), False Negatives (FN), and True Negatives (TN), and are described below: • Accuracy is calculated by dividing the number of correct predictions by the total number of predictions [IMAGE: /static/images/62502ef3/0deb976e.png] • Precision: Precision measures the proportion of correct positive predictions out of all positive predictions made by the model. [IMAGE: /static/images/62502ef3/bebd1397.png] • Recall: Recall measures the proportion of true positives detected out of all actual positives in the dataset. [IMAGE: /static/images/62502ef3/bf4059bf.png] • F1 Score: The F1 score is the harmonic mean of precision and recall, balancing the two metrics. [IMAGE: /static/images/62502ef3/8ea2dc2b.png] • Mean Average Precision (mAP): mAP is the mean of the Average Precision (AP) across all classes, where AP is the area under the precision-recall curve. [IMAGE: /static/images/62502ef3/7848ce72.png] mAP is typically evaluated at different IoU thresholds, such as 50% (mAP50) and between 50% and 95% (mAP50-95). • mAP50(B): This is the mean Average Precision calculated specifically for bounding box detection at an IoU threshold of 50%. ",
+      "content": "The performance of the model was evaluated using several metrics to assess its accuracy in detecting and classifying different leaf conditions. The primary metrics used include precision, recall, F1 score, mAP. These metrics are calculated based on fundamental parameters such as True Positives (TP), False Positives (FP), False Negatives (FN), and True Negatives (TN), and are described below: • Accuracy is calculated by dividing the number of correct predictions by the total number of predictions [IMAGE: /static/images/9c1e23ef/56eaa983.png] • Precision: Precision measures the proportion of correct positive predictions out of all positive predictions made by the model. [IMAGE: /static/images/9c1e23ef/3b1b0d48.png] • Recall: Recall measures the proportion of true positives detected out of all actual positives in the dataset. [IMAGE: /static/images/9c1e23ef/17e8f067.png] • F1 Score: The F1 score is the harmonic mean of precision and recall, balancing the two metrics. [IMAGE: /static/images/9c1e23ef/106bb321.png] • Mean Average Precision (mAP): mAP is the mean of the Average Precision (AP) across all classes, where AP is the area under the precision-recall curve. [IMAGE: /static/images/9c1e23ef/be8902a1.png] mAP is typically evaluated at different IoU thresholds, such as 50% (mAP50) and between 50% and 95% (mAP50-95). • mAP50(B): This is the mean Average Precision calculated specifically for bounding box detection at an IoU threshold of 50%. ",
       "heading": "Evaluation Metrics",
       "subsections": []
     },
     {
-      "content": "The results of the proposed augmented dataset are highly impressive, as evidenced by the performance metrics in Table 6 and Supplementary 2. The proposed model achieves an outstanding mAP of 97 at an Intersection over the Union (IoU) threshold of 0.50 and 94.5 across IoU thresholds ranging from 0.50 to 0.95. Precision reaches 91.8%, meaning maximum of predicted positive instances correspond to true positives, while recall is 90.2%, demonstrating that the model successfully identifies maximum of true positives. The F1 score of 94.7 further underscores the balanced performance between Precision and Recall. Among the classes, N (Nitrogen deficiency) and Healthy images show excellent Precision (91.4%), indicating extremely less false positives, but the Recall for Healthy images is slightly lower (89%), suggesting a few missed detections. Similarly, N K (Nitrogen-Potassium) and N Mg (Nitrogen-Magnesium) perform consistently well, with all metrics at or near 97%. The lowest Precision (60.6%) is observed in LS, but its Recall (100%) compensates, leading to balanced mAP values and the precision of class DM is perfect (100%) indicating no false positives. The results on the original dataset (unaugmented dataset) are shown in Table 5. This result is not very impressive due to the limited original dataset. Table 5: The outcome of the model on the original dataset (unaugmented dataset) of different classes. Table 6: Final outcome of the proposed approach for different classes on the augmented dataset. The model exhibits low losses, with a Box loss of 0.1405, a Class loss of 0.1116, and a Distribution Focal Loss (dfl loss) of 0.8192. These low-valued parameters of the model suggest minimal error in detection and high accuracy. The graph in Figure 5 illustrates the training and validation performance of the YOLOv8 model over 100 epochs, which shows clear improvements in key metrics. The box, classification, and distribution focal losses all decrease significantly, reflecting effective learning of object localization and classification. Both training and validation losses steadily decline without signs of overfitting. Furthermore, as shown in Figure 6, precision and recall increase sharply, nearing 1.0, which confirms the excellent performance of the model in detecting true positives and identifying relevant instances. The mAP50 stabilizes around 97%, while the mAP50-95, which evaluates detection across various IoU thresholds, converges near 94.5%. In particular, the box loss, class loss, and distribution focal loss in both training and validation phases show a steady downward trend over the epochs, while the Precision and Recall metrics improve rapidly, stabilising at near-perfect values. The overall model performance indicates robustness, with strong generalization capabilities, and it demonstrates exceptional accuracy across all evaluated metrics. [IMAGE: /static/images/62502ef3/35e674ec.png] Figure 6: Training and validation performance metrics of the YOLOv8 model over 100 epochs. The top row shows training box loss, classification loss, distribution focal loss, precision, and recall. The bottom row illustrates validation box loss, classification loss, distribution focal loss, and mAP metrics at IoU thresholds 0.50 (mAP50) and 0.50-0.95 (mAP50-95). The confusion matrix in Figure 7 concisely evaluates the classification performance of the model across various categories. The diagonal elements represent the true positives, where the predicted class matches the actual class. The model correctly classified 69 instances of “DM” 49 of “JAS” 73 of “K” and 103 of “healthy” during validation set. These correct classifications highlight the ability of the model to differentiate between classes. The off-diagonal elements reflect minimal misclassifications (false positives and false negatives). There was only one misclassification of ”K” as ”background” and two ”healthy” sample classified as ”background”. With only 26 misclassifications out of 964 total predictions, the model demonstrates high accuracy and robustness, with very little confusion between categories. Overall, the confusion matrix of the model of validation set in Figure 8 underscores the strong performance, with a significant majority of correct predictions and minimal misclassifications, attesting to its effectiveness in classifying diverse categories. The confusion matrix in Figure 8 concisely evaluates the classification performance of the model across various categories on the original dataset, whereas Figure 7 shows the confusion matrix of our proposed approach. [IMAGE: /static/images/62502ef3/7d7f4f93.png] Figure 7: Confusion matrix of validation set for classification model performance on the augmented dataset [IMAGE: /static/images/62502ef3/1c580bf7.png] Figure 8: Confusion matrix of validation set for classification model performance of the original dataset without augmentation The four plots in Figure 9 illustrate the classification performance of the model across key metrics: recall, precision, and F1-score, with respect to confidence. The Recall-Confidence Curve shows that recall remains high (near 1.0) for all classes, dropping only at the highest confidence levels, indicating the model correctly identifies most positive instances. The Precision-Recall Curve reflects an almost perfect precision (0.995) for all classes, with a strong balance between precision and recall. In the Precision-Confidence Curve, precision rises sharply with confidence, stabilizing near 1.0 for confidence values above 0.8, indicating high accuracy in positive predictions at higher confidence thresholds. The F1-Confidence Curve demonstrates that F1-scores also rise and remain near 1.0 with increasing confidence, which shows a strong balance between precision and recall across all classes. [IMAGE: /static/images/62502ef3/d62fd666.png] Figure 9: Performance Metrics: Recall-Confidence, Precision-Recall, Precision-Confidence, and F1-Confidence Curves Figure 10 visually compares the actual and predicted labels for leaf disease detection. The bounding boxes and associated labels show the minimal discrepancies between the actual and predicted classes, which indicates the high accuracy of the model. The confidence scores displayed with the predicted boundary box exhibit the high reliability of the model, as high confidence is consistently associated with accurate classifications. [IMAGE: /static/images/62502ef3/5eb3dd20.png] Figure 10: Visual comparison of actual versus predicted leaf classifications ",
+      "content": "The results of the proposed augmented dataset are highly impressive, as evidenced by the performance metrics in Table 6 and Supplementary 2. The proposed model achieves an outstanding mAP of 97 at an Intersection over the Union (IoU) threshold of 0.50 and 94.5 across IoU thresholds ranging from 0.50 to 0.95. Precision reaches 91.8%, meaning maximum of predicted positive instances correspond to true positives, while recall is 90.2%, demonstrating that the model successfully identifies maximum of true positives. The F1 score of 94.7 further underscores the balanced performance between Precision and Recall. Among the classes, N (Nitrogen deficiency) and Healthy images show excellent Precision (91.4%), indicating extremely less false positives, but the Recall for Healthy images is slightly lower (89%), suggesting a few missed detections. Similarly, N K (Nitrogen-Potassium) and N Mg (Nitrogen-Magnesium) perform consistently well, with all metrics at or near 97%. The lowest Precision (60.6%) is observed in LS, but its Recall (100%) compensates, leading to balanced mAP values and the precision of class DM is perfect (100%) indicating no false positives. The results on the original dataset (unaugmented dataset) are shown in Table 5. This result is not very impressive due to the limited original dataset. Table 5: The outcome of the model on the original dataset (unaugmented dataset) of different classes. Table 6: Final outcome of the proposed approach for different classes on the augmented dataset. The model exhibits low losses, with a Box loss of 0.1405, a Class loss of 0.1116, and a Distribution Focal Loss (dfl loss) of 0.8192. These low-valued parameters of the model suggest minimal error in detection and high accuracy. The graph in Figure 5 illustrates the training and validation performance of the YOLOv8 model over 100 epochs, which shows clear improvements in key metrics. The box, classification, and distribution focal losses all decrease significantly, reflecting effective learning of object localization and classification. Both training and validation losses steadily decline without signs of overfitting. Furthermore, as shown in Figure 6, precision and recall increase sharply, nearing 1.0, which confirms the excellent performance of the model in detecting true positives and identifying relevant instances. The mAP50 stabilizes around 97%, while the mAP50-95, which evaluates detection across various IoU thresholds, converges near 94.5%. In particular, the box loss, class loss, and distribution focal loss in both training and validation phases show a steady downward trend over the epochs, while the Precision and Recall metrics improve rapidly, stabilising at near-perfect values. The overall model performance indicates robustness, with strong generalization capabilities, and it demonstrates exceptional accuracy across all evaluated metrics. [IMAGE: /static/images/9c1e23ef/ef29e1d1.png] Figure 6: Training and validation performance metrics of the YOLOv8 model over 100 epochs. The top row shows training box loss, classification loss, distribution focal loss, precision, and recall. The bottom row illustrates validation box loss, classification loss, distribution focal loss, and mAP metrics at IoU thresholds 0.50 (mAP50) and 0.50-0.95 (mAP50-95). The confusion matrix in Figure 7 concisely evaluates the classification performance of the model across various categories. The diagonal elements represent the true positives, where the predicted class matches the actual class. The model correctly classified 69 instances of “DM” 49 of “JAS” 73 of “K” and 103 of “healthy” during validation set. These correct classifications highlight the ability of the model to differentiate between classes. The off-diagonal elements reflect minimal misclassifications (false positives and false negatives). There was only one misclassification of ”K” as ”background” and two ”healthy” sample classified as ”background”. With only 26 misclassifications out of 964 total predictions, the model demonstrates high accuracy and robustness, with very little confusion between categories. Overall, the confusion matrix of the model of validation set in Figure 8 underscores the strong performance, with a significant majority of correct predictions and minimal misclassifications, attesting to its effectiveness in classifying diverse categories. The confusion matrix in Figure 8 concisely evaluates the classification performance of the model across various categories on the original dataset, whereas Figure 7 shows the confusion matrix of our proposed approach. [IMAGE: /static/images/9c1e23ef/c6ada3e5.png] Figure 7: Confusion matrix of validation set for classification model performance on the augmented dataset [IMAGE: /static/images/9c1e23ef/b33f5397.png] Figure 8: Confusion matrix of validation set for classification model performance of the original dataset without augmentation The four plots in Figure 9 illustrate the classification performance of the model across key metrics: recall, precision, and F1-score, with respect to confidence. The Recall-Confidence Curve shows that recall remains high (near 1.0) for all classes, dropping only at the highest confidence levels, indicating the model correctly identifies most positive instances. The Precision-Recall Curve reflects an almost perfect precision (0.995) for all classes, with a strong balance between precision and recall. In the Precision-Confidence Curve, precision rises sharply with confidence, stabilizing near 1.0 for confidence values above 0.8, indicating high accuracy in positive predictions at higher confidence thresholds. The F1-Confidence Curve demonstrates that F1-scores also rise and remain near 1.0 with increasing confidence, which shows a strong balance between precision and recall across all classes. [IMAGE: /static/images/9c1e23ef/8c60d6d6.png] Figure 9: Performance Metrics: Recall-Confidence, Precision-Recall, Precision-Confidence, and F1-Confidence Curves Figure 10 visually compares the actual and predicted labels for leaf disease detection. The bounding boxes and associated labels show the minimal discrepancies between the actual and predicted classes, which indicates the high accuracy of the model. The confidence scores displayed with the predicted boundary box exhibit the high reliability of the model, as high confidence is consistently associated with accurate classifications. [IMAGE: /static/images/9c1e23ef/8729d884.png] Figure 10: Visual comparison of actual versus predicted leaf classifications ",
       "heading": "Result analysis of the proposed approach",
       "subsections": []
     },
@@ -88,6 +89,509 @@
       "heading": "Acknowledgements",
       "subsections": []
     }
+  ],
+  "tables": [
+    [
+      [
+        "Crop",
+        "Primary Class",
+        "Secondary Class Abbreviation",
+        "Secondary Class Full Form",
+        "Sample Size"
+      ],
+      [
+        "Bitter gourd",
+        "Healthy",
+        "-",
+        "-",
+        "181"
+      ],
+      [
+        "Bitter gourd",
+        "Disease",
+        "DM",
+        "Downy Mildew",
+        "48"
+      ],
+      [
+        "Bitter gourd",
+        "Disease",
+        "LS",
+        "Leaf Spot",
+        "35"
+      ],
+      [
+        "Bitter gourd",
+        "Insect",
+        "JAS",
+        "Jassid",
+        "35"
+      ],
+      [
+        "Bitter gourd",
+        "Nutritional Deficiency",
+        "K",
+        "Potassium Deficiency",
+        "55"
+      ],
+      [
+        "Bitter gourd",
+        "Nutritional Deficiency",
+        "K Mg",
+        "Potassium and Magnesium Deficiency",
+        "40"
+      ],
+      [
+        "Bitter gourd",
+        "Nutritional Deficiency",
+        "N",
+        "Nitrogen Deficiency",
+        "147"
+      ],
+      [
+        "Bitter gourd",
+        "Nutritional Deficiency",
+        "N K",
+        "Nitrogen and Potassium Deficiency",
+        "128"
+      ],
+      [
+        "Bitter gourd",
+        "Nutritional Deficiency",
+        "N Mg",
+        "Nitrogen and Magnesium Deficiency",
+        "116"
+      ]
+    ],
+    [
+      [
+        "Class",
+        "Total",
+        "Train (81%)",
+        "Validation (15%)",
+        "Test (4%)"
+      ],
+      [
+        "Healthy",
+        "818",
+        "594",
+        "105",
+        "119"
+      ],
+      [
+        "Downy Mildew (DM)",
+        "468",
+        "392",
+        "69",
+        "7"
+      ],
+      [
+        "Leaf Spot (LS)",
+        "306",
+        "249",
+        "48",
+        "9"
+      ],
+      [
+        "Jassid (JAS)",
+        "367",
+        "313",
+        "49",
+        "5"
+      ],
+      [
+        "Potassium Deficiency (K)",
+        "493",
+        "408",
+        "73",
+        "12"
+      ],
+      [
+        "Potassium and Magnesium Deficiency (K Mg)",
+        "383",
+        "294",
+        "81",
+        "8"
+      ],
+      [
+        "Nitrogen Deficiency (N)",
+        "1381",
+        "1148",
+        "208",
+        "25"
+      ],
+      [
+        "Nitrogen and Potassium Deficiency (N K)",
+        "1156",
+        "953",
+        "179",
+        "24"
+      ],
+      [
+        "Nitrogen and Magnesium Deficiency (N Mg)",
+        "1024",
+        "844",
+        "152",
+        "28"
+      ],
+      [
+        "Total",
+        "6,396",
+        "5,195",
+        "964",
+        "237"
+      ]
+    ],
+    [
+      [
+        "Parameter",
+        "Values",
+        "Parameter",
+        "Values"
+      ],
+      [
+        "Number of Epochs (epochs)",
+        "100",
+        "Batch Size (batch)",
+        "16"
+      ],
+      [
+        "Image Size (imgsz)",
+        "640",
+        "Device (device)",
+        "0"
+      ],
+      [
+        "Number of Workers (workers)",
+        "8",
+        "Optimizer (optimizer)",
+        "Auto"
+      ],
+      [
+        "Pretrained (pretrained)",
+        "True",
+        "Verbose Output (verbose)",
+        "True"
+      ],
+      [
+        "Random Seed (seed)",
+        "0",
+        "Deterministic (deterministic)",
+        "True"
+      ],
+      [
+        "Rectangular training (rect)",
+        "False",
+        "Close Mosaic (close mosaic)",
+        "10"
+      ],
+      [
+        "Automatic Mixed Precision (amp)",
+        "True",
+        "Validation (val)",
+        "True"
+      ],
+      [
+        "Intersection over Union (IoU)",
+        "0.7",
+        "Max Detections (max det)",
+        "300"
+      ],
+      [
+        "Overlap Masking (overlap mask)",
+        "True",
+        "Mask Ratio (mask ratio)",
+        "4"
+      ],
+      [
+        "Dropout Rate (dropout)",
+        "0.0",
+        "Non-Maximum Suppression (nms)",
+        "False"
+      ],
+      [
+        "Initial Learning Rate (lr0)",
+        "0.01",
+        "Learning Rate Final (lrf)",
+        "0.01"
+      ],
+      [
+        "Momentum (momentum)",
+        "0.937",
+        "Weight Decay (weight decay)",
+        "0.0005"
+      ],
+      [
+        "Warmup Epochs (warmup epochs)",
+        "3.0",
+        "Warmup Momentum (warmup momentum)",
+        "0.8"
+      ],
+      [
+        "Warmup Bias Learning Rate (warmup bias lr)",
+        "0.1",
+        "Bounding Box Loss (box)",
+        "7.5"
+      ],
+      [
+        "Classification Loss (cls)",
+        "0.5",
+        "Distribution Focal Loss (dfl)",
+        "1.5"
+      ],
+      [
+        "Vertical Flip Probability (flipud)",
+        "0.0",
+        "Horizontal Flip Probability (fliplr)",
+        "0.5"
+      ],
+      [
+        "Mosaic Augmentation (mosaic)",
+        "1.0",
+        "Auto Augmentation (auto augment)",
+        "randaugment"
+      ],
+      [
+        "Random Erasing (erasing)",
+        "0.4",
+        "Tracker (tracker)",
+        "botsort.yaml"
+      ]
+    ],
+    [
+      [
+        "S. No",
+        "Augmentation Technique",
+        "Training Epochs",
+        "mAP50 Score"
+      ],
+      [
+        "1",
+        "None (Baseline)",
+        "100",
+        "0.698"
+      ],
+      [
+        "3",
+        "90° Rotation (Clockwise/Counterclockwise)",
+        "100",
+        "0.834"
+      ],
+      [
+        "4",
+        "Saturation variation (-25% to +25%)",
+        "100",
+        "0.900"
+      ],
+      [
+        "6",
+        "Salt and pepper noise (up to 0.5%)",
+        "100",
+        "0.945"
+      ]
+    ],
+    [
+      [
+        "Class",
+        "Images",
+        "Instances",
+        "Precision (P)",
+        "Recall (R)",
+        "mAP50",
+        "mAP50-95"
+      ],
+      [
+        "All",
+        "118",
+        "118",
+        "0.527",
+        "0.727",
+        "0.698",
+        "0.684"
+      ],
+      [
+        "DM",
+        "8",
+        "8",
+        "0.394",
+        "0.650",
+        "0.656",
+        "0.650"
+      ],
+      [
+        "Healthy",
+        "27",
+        "27",
+        "0.489",
+        "0.815",
+        "0.767",
+        "0.725"
+      ],
+      [
+        "JAS",
+        "5",
+        "5",
+        "0.434",
+        "1.000",
+        "0.795",
+        "0.795"
+      ],
+      [
+        "K",
+        "8",
+        "8",
+        "0.667",
+        "1.000",
+        "0.954",
+        "0.954"
+      ],
+      [
+        "K Mg",
+        "6",
+        "6",
+        "0.681",
+        "0.718",
+        "0.827",
+        "0.827"
+      ],
+      [
+        "LS",
+        "5",
+        "5",
+        "0.288",
+        "0.600",
+        "0.446",
+        "0.417"
+      ],
+      [
+        "N",
+        "22",
+        "22",
+        "0.393",
+        "0.727",
+        "0.457",
+        "0.449"
+      ],
+      [
+        "N K",
+        "20",
+        "20",
+        "0.772",
+        "0.680",
+        "0.801",
+        "0.781"
+      ],
+      [
+        "N Mg",
+        "17",
+        "17",
+        "0.629",
+        "0.353",
+        "0.581",
+        "0.563"
+      ]
+    ],
+    [
+      [
+        "Class",
+        "Images",
+        "Instances",
+        "Precision (P)",
+        "Recall (R)",
+        "mAP50",
+        "mAP50-95"
+      ],
+      [
+        "All",
+        "237",
+        "237",
+        "0.918",
+        "0.902",
+        "0.97",
+        "0.945"
+      ],
+      [
+        "DM",
+        "7",
+        "7",
+        "1",
+        "0.950",
+        "0.995",
+        "0.981"
+      ],
+      [
+        "JAS",
+        "5",
+        "5",
+        "0.965",
+        "1",
+        "0.995",
+        "0.96"
+      ],
+      [
+        "K",
+        "12",
+        "12",
+        "0.986",
+        "1",
+        "0.995",
+        "0.98"
+      ],
+      [
+        "K Mg",
+        "8",
+        "8",
+        "0.965",
+        "1",
+        "0.995",
+        "0.959"
+      ],
+      [
+        "LS",
+        "9",
+        "9",
+        "0.606",
+        "1",
+        "0.973",
+        "0.932"
+      ],
+      [
+        "N",
+        "25",
+        "25",
+        "0.894",
+        "0.672",
+        "0.894",
+        "0.878"
+      ],
+      [
+        "N K",
+        "24",
+        "24",
+        "0.973",
+        "0.792",
+        "0.959",
+        "0.944"
+      ],
+      [
+        "N Mg",
+        "28",
+        "28",
+        "0.958",
+        "0.814",
+        "0.955",
+        "0.936"
+      ],
+      [
+        "Healthy",
+        "119",
+        "119",
+        "0.914",
+        "0.890",
+        "0.969",
+        "0.937"
+      ]
+    ]
   ],
   "title": "AgriCure: A web application based layered augmentation-enhanced YOLOv8 for disease and nutrient deficiency detection in bitter gourd leaves"
 }

@@ -3,16 +3,15 @@ import re
 import os
 import shutil
 from PIL import Image
-from datetime import datetime, timezone
 
-# Template for IEEE LaTeX with unique bibitem labels
 IEEE_TEMPLATE = r"""
 \documentclass[conference]{IEEEtran}
 \usepackage{graphicx}
-\usepackage{float}  % helps with image placement
+\usepackage{float}
 \usepackage{amsmath}
 \usepackage{caption}
 \usepackage{hyperref}
+\usepackage{booktabs}
 
 \title{<< title >>}
 \author{}
@@ -20,46 +19,50 @@ IEEE_TEMPLATE = r"""
 \begin{document}
 \maketitle
 
+{% if abstract %}
 \begin{abstract}
 << abstract >>
 \end{abstract}
+{% endif %}
 
+{% if keywords %}
 \begin{IEEEkeywords}
 << keywords >>
 \end{IEEEkeywords}
+{% endif %}
 
 {% for section in sections %}
 \section{<< section.heading >>}
 << section.content >>
 
-  {% for sub in section.subsections %}
-  \subsection{<< sub.heading >>}
-  << sub.content >>
-  {% endfor %}
+{% for sub in section.subsections %}
+\subsection{<< sub.heading >>}
+<< sub.content >>
+{% endfor %}
 {% endfor %}
 
+{% if references %}
 \begin{thebibliography}{99}
-  {% for ref in references %}
-  \bibitem{ref<< loop.index >>} << ref >>
-  {% endfor %}
+{% for ref in references %}
+\bibitem{ref<< loop.index >>} << ref >>
+{% endfor %}
 \end{thebibliography}
+{% endif %}
 
 \end{document}
 """
 
-# Escape LaTeX special characters
 def latex_escape(text):
     if not isinstance(text, str):
-        return text
+        return str(text) if text is not None else ""
     replacements = {
         '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#',
         '_': r'\_', '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}',
-        '^': r'\^{}', '\\': r'\textbackslash{}',
+        '^': r'\textasciicircum{}', '\\': r'\textbackslash{}'
     }
     pattern = re.compile('|'.join(re.escape(k) for k in replacements))
     return pattern.sub(lambda m: replacements[m.group()], text)
 
-# Convert image to PNG if needed
 def convert_to_png(src, dest):
     try:
         with Image.open(src) as img:
@@ -67,76 +70,152 @@ def convert_to_png(src, dest):
             rgb_img.save(dest, 'PNG')
         return True
     except Exception as e:
-        print("[ERROR] Failed to convert image:", e)
+        print(f"[ERROR] Failed to convert image {src}: {e}")
         return False
 
-# Validate PNG image
 def is_valid_png(filepath):
     try:
         with Image.open(filepath) as img:
             img.verify()
             return img.format == 'PNG'
     except Exception:
-        print(f"[SKIP] Invalid image {filepath}")
         return False
 
-# Updated image pattern: matches [IMAGE: path]
-image_pattern = re.compile(r'\[IMAGE:\s*(.*?)\]')
+image_pattern = re.compile(r'\[IMAGE:\s*([^\]]+)\]')
+table_pattern = re.compile(r'\[TABLE:\s*([^\]]+)\]')
 
-def render_images(content, image_dir, temp_image_dir):
+def render_images(content, temp_image_dir):
     def replace_image(match):
         img_path = match.group(1).strip()
+        
+        if img_path.startswith('/static/'):
+            full_src = img_path.lstrip('/')
+        else:
+            full_src = img_path.lstrip("/\\")
+        
         filename = os.path.basename(img_path)
-        full_src = os.path.join(".", img_path.lstrip("/\\"))
         full_dest = os.path.join(temp_image_dir, filename)
 
         if os.path.exists(full_src):
-            if is_valid_png(full_src):
-                shutil.copy(full_src, full_dest)
-            else:
-                if not convert_to_png(full_src, full_dest):
-                    return r"\textbf{[Image failed to render]}"
-            return (
-                r"\begin{figure}[H]\centering"
-                f"\n\\includegraphics[width=0.5\\textwidth]{{{filename}}}"
-                f"\n\\caption{{Image: {filename}}}"
-                r"\end{figure}"
-            )
+            try:
+                if is_valid_png(full_src):
+                    shutil.copy(full_src, full_dest)
+                else:
+                    if not convert_to_png(full_src, full_dest):
+                        return r"\textbf{[Image conversion failed]}"
+                
+                return (
+                    r"\begin{figure}[H]" + "\n"
+                    r"\centering" + "\n"
+                    f"\\includegraphics[width=0.5\\textwidth]{{{filename}}}" + "\n"
+                    f"\\caption{{Image: {latex_escape(filename)}}}" + "\n"
+                    r"\end{figure}" + "\n"
+                )
+            except Exception as e:
+                return r"\textbf{[Image processing failed]}"
         else:
             return r"\textbf{[Image not found]}"
     
     return image_pattern.sub(replace_image, content)
 
+def render_tables(content, table_data):
+    def replace_table(match):
+        table_id = match.group(1).strip()
+        
+        if table_id in table_data:
+            table = table_data[table_id]
+            if not table or not table[0]:
+                return r"\textbf{[Empty table]}"
+            
+            col_count = len(table[0])
+            # Use table* for two-column spanning in IEEE format
+            latex = "\\begin{table*}[t]\n\\centering\n"
+            latex += "\\begin{tabular}{|" + "|".join(["c"] * col_count) + "|}\n"
+            latex += "\\hline\n"
+            
+            for row in table:
+                escaped_cells = [latex_escape(cell) for cell in row]
+                latex += " & ".join(escaped_cells) + " \\\\\n\\hline\n"
+            
+            latex += "\\end{tabular}\n"
+            latex += "\\caption{Table}\n"
+            latex += "\\end{table*}\n"
+            
+            return latex
+        else:
+            return r"\textbf{[Table not found]}"
+    
+    return table_pattern.sub(replace_table, content)
 
+def safe_latex_escape(text, table_data):
+    """
+    Escape LaTeX special characters but preserve LaTeX commands generated by render_images and render_tables
+    """
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    
+    parts = []
+    current_pos = 0
+    
+    # Find LaTeX figure and table blocks
+    latex_blocks_pattern = re.compile(r'\\begin\{(figure|table\*?)\}.*?\\end\{\1\}', re.DOTALL)
+    
+    for match in latex_blocks_pattern.finditer(text):
+        # Add escaped text before the LaTeX block
+        if match.start() > current_pos:
+            before_text = text[current_pos:match.start()]
+            parts.append(latex_escape(before_text))
+        
+        # Add the LaTeX block without escaping
+        parts.append(match.group())
+        current_pos = match.end()
+    
+    # Add any remaining text after the last LaTeX block
+    if current_pos < len(text):
+        remaining_text = text[current_pos:]
+        parts.append(latex_escape(remaining_text))
+    
+    return ''.join(parts)
 
-# Main PDF generation function
 def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
     try:
         from pathlib import Path
         import tempfile
         import subprocess
+        import copy
 
-        parsed_data["title"] = latex_escape(parsed_data.get("title", ""))
-        parsed_data["abstract"] = latex_escape(parsed_data.get("abstract", ""))
-        parsed_data["keywords"] = latex_escape(parsed_data.get("keywords", ""))
+        data = copy.deepcopy(parsed_data)
+        table_data = data.get("table_data", {})
+
+        # Escape basic fields
+        data["title"] = latex_escape(data.get("title", "Untitled Document"))
+        data["abstract"] = latex_escape(data.get("abstract", ""))
+        data["keywords"] = latex_escape(data.get("keywords", ""))
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            for section in parsed_data.get("sections", []):
+            print(f"[INFO] Working in temp directory: {tmpdir}")
+            
+            # Process sections with inline table and image rendering
+            for section in data.get("sections", []):
                 section["heading"] = latex_escape(section.get("heading", ""))
-
-                # First render images, then escape text
                 raw_content = section.get("content", "")
-                rendered_content = render_images(raw_content, '', tmpdir)
-                section["content"] = latex_escape(rendered_content)
-
+                
+                # First render images
+                rendered_content = render_images(raw_content, tmpdir)
+                # Then render tables inline
+                rendered_content = render_tables(rendered_content, table_data)
+                # Finally, safely escape (preserving LaTeX commands)
+                section["content"] = safe_latex_escape(rendered_content, table_data)
+                
                 for sub in section.get("subsections", []):
                     sub["heading"] = latex_escape(sub.get("heading", ""))
                     raw_sub_content = sub.get("content", "")
-                    rendered_sub = render_images(raw_sub_content, '', tmpdir)
-                    sub["content"] = latex_escape(rendered_sub)
+                    rendered_sub = render_images(raw_sub_content, tmpdir)
+                    rendered_sub = render_tables(rendered_sub, table_data)
+                    sub["content"] = safe_latex_escape(rendered_sub, table_data)
 
-            # Escape references
-            parsed_data["references"] = [latex_escape(ref) for ref in parsed_data.get("references", [])]
+            # Process references
+            data["references"] = [latex_escape(ref) for ref in data.get("references", [])]
 
             # Render LaTeX
             env = Environment(
@@ -146,33 +225,52 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                 autoescape=False
             )
             template = env.from_string(IEEE_TEMPLATE)
-            tex_code = template.render(**parsed_data)
+            tex_code = template.render(**data)
 
+            # Save .tex file
             tex_path = Path(tmpdir) / "paper.tex"
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(tex_code)
+            
+            print(f"[INFO] LaTeX file written to: {tex_path}")
 
-            # Run pdflatex
-            result = subprocess.run(
-                ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, str(tex_path)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            # Run pdflatex twice for proper references
+            for run_num in [1, 2]:
+                print(f"[INFO] Running pdflatex (pass {run_num})")
+                result = subprocess.run(
+                    ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, str(tex_path)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=tmpdir
+                )
+                
+                if result.returncode != 0:
+                    error_log = result.stdout.decode("utf-8", errors="ignore") + "\n" + result.stderr.decode("utf-8", errors="ignore")
+                    print(f"[ERROR] pdflatex failed on pass {run_num}")
+                    print(error_log)
+                    return {
+                        "error": f"LaTeX compilation failed on pass {run_num}",
+                        "log": error_log,
+                        "tex_code": tex_code
+                    }
 
+            # Check if PDF was generated
             pdf_path = Path(tmpdir) / "paper.pdf"
             if pdf_path.exists():
                 os.makedirs("static", exist_ok=True)
-                os.replace(pdf_path, output_path)
+                shutil.copy(pdf_path, output_path)
+                print(f"[SUCCESS] PDF generated: {output_path}")
                 return {"success": True}
             else:
+                log_output = result.stdout.decode("utf-8", errors="ignore") + "\n" + result.stderr.decode("utf-8", errors="ignore")
                 return {
-                    "error": "LaTeX ran but PDF not generated.",
-                    "log": result.stdout.decode("utf-8") + "\n" + result.stderr.decode("utf-8")
+                    "error": "LaTeX ran but PDF not generated",
+                    "log": log_output,
+                    "tex_code": tex_code
                 }
 
     except FileNotFoundError as e:
-        return {"error": f"Missing executable: {e.filename}. Is it installed and in your system PATH?"}
+        return {"error": f"Missing executable: {e.filename}. Please install LaTeX (texlive-full or similar)"}
     except Exception as e:
-        print("[ERROR] Subprocess failed:", e)
-        return {"error": str(e)}
-
+        print(f"[ERROR] Subprocess failed: {e}")
+        return {"error": f"Unexpected error: {str(e)}"}

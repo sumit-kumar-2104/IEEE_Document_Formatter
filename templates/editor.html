@@ -23,12 +23,12 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
   <button onclick="downloadMarkdown()">⬇ Download Markdown</button>
 </div>
 
-<div id="editorContainer" style="display: flex; gap: 1em; height: 85vh; flex-wrap: wrap;">
+<div id="editorContainer" style="display: flex; gap: 1em; height: 85vh;">
   <!-- 📝 Editable Structured Content (Left Panel) -->
-  <div id="structuredEditor" class="panel" style="flex: 1; border-left: 6px solid #ffb300; overflow-y: auto;"></div>
+  <div id="structuredEditor" class="panel" style="flex: 1; border-left: 6px solid #ffb300; overflow-y: auto; max-height: 85vh;"></div>
 
   <!-- 📄 LaTeX PDF Preview (Right Panel) -->
-  <div id="ieeePreview" class="panel" style="flex: 1; background-color: rgba(40, 40, 40, 0.95); border-left: 6px solid #757575;">
+  <div id="ieeePreview" class="panel" style="flex: 1; background-color: rgba(40, 40, 40, 0.95); border-left: 6px solid #757575; overflow-y: auto; max-height: 85vh;">
     <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none; border-radius: 6px;"></iframe>
   </div>
 </div>
@@ -43,29 +43,42 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
     }).replace(/\n/g, '<br>');
   }
 
+  function renderTable(table, idx) {
+    let html = `<div class="table-block" data-table-id="${idx}"><table border="1" style="width:100%;margin:10px 0;">`;
+    table.forEach(row => {
+      html += "<tr>";
+      row.forEach(cell => {
+        html += `<td>${cell}</td>`;
+      });
+      html += "</tr>";
+    });
+    html += "</table></div>";
+    return html;
+  }
+
   function renderEditableStructure() {
     const container = document.getElementById('structuredEditor');
     container.innerHTML = '';
 
-    container.innerHTML += `<div class="editable-heading">Title</div>
-      <div class="editable-para" contenteditable="true" data-key="title">${parsedData.title || ''}</div>`;
+    container.innerHTML += `<div class="editable-heading" data-section-id="title">Title</div>
+      <div class="editable-para" contenteditable="true" data-key="title" data-section-id="title">${parsedData.title || ''}</div>`;
 
     if (parsedData.abstract)
-      container.innerHTML += `<div class="editable-heading">Abstract</div>
-      <div class="editable-para" contenteditable="true" data-key="abstract">${renderContentWithImages(parsedData.abstract)}</div>`;
+      container.innerHTML += `<div class="editable-heading" data-section-id="abstract">Abstract</div>
+      <div class="editable-para" contenteditable="true" data-key="abstract" data-section-id="abstract">${renderContentWithImages(parsedData.abstract)}</div>`;
 
     if (parsedData.keywords)
-      container.innerHTML += `<div class="editable-heading">Keywords</div>
-      <div class="editable-para" contenteditable="true" data-key="keywords">${renderContentWithImages(parsedData.keywords)}</div>`;
+      container.innerHTML += `<div class="editable-heading" data-section-id="keywords">Keywords</div>
+      <div class="editable-para" contenteditable="true" data-key="keywords" data-section-id="keywords">${renderContentWithImages(parsedData.keywords)}</div>`;
 
     (parsedData.sections || []).forEach((sec, i) => {
-      container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading">${sec.heading}</div>
-        <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content">${renderContentWithImages(sec.content)}</div>`;
+      container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading" data-section-id="section-${i}">${sec.heading}</div>
+        <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content" data-section-id="section-${i}">${renderContentWithImages(sec.content)}</div>`;
 
       if (sec.images) {
         sec.images.forEach((img, j) => {
-          container.innerHTML += `
-            <div class="image-block" style="margin: 10px 0;" data-sec="${i}" data-img="${j}">
+          container.innerHTML += 
+            `<div class="image-block" style="margin: 10px 0;" data-sec="${i}" data-img="${j}" data-section-id="section-${i}-img-${j}">
               <img src="${img.path}" style="max-width: 100%; max-height: 200px; display: block; margin-bottom: 5px;" />
               <input type="text" class="image-caption" data-sec="${i}" data-img="${j}" value="${img.caption || ''}" placeholder="Caption..." style="width: 100%; margin-bottom: 5px;" />
               <select class="image-size" data-sec="${i}" data-img="${j}" style="width: 100%;">
@@ -78,15 +91,23 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
       }
 
       (sec.subsections || []).forEach((sub, j) => {
-        container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading">${sub.heading}</div>
-          <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content">${renderContentWithImages(sub.content)}</div>`;
+        container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading" data-section-id="section-${i}-sub-${j}">${sub.heading}</div>
+          <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content" data-section-id="section-${i}-sub-${j}">${renderContentWithImages(sub.content)}</div>`;
       });
     });
 
+    // Render tables
+    if (parsedData.tables && parsedData.tables.length > 0) {
+      container.innerHTML += `<div class="editable-heading" data-section-id="tables">Tables</div>`;
+      parsedData.tables.forEach((table, idx) => {
+        container.innerHTML += renderTable(table, idx);
+      });
+    }
+
     if (parsedData.references && parsedData.references.length > 0) {
-      container.innerHTML += `<div class="editable-heading">References</div>`;
+      container.innerHTML += `<div class="editable-heading" data-section-id="references">References</div>`;
       parsedData.references.forEach((ref, i) => {
-        container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}">${renderContentWithImages(ref)}</div>`;
+        container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}" data-section-id="ref-${i}">${renderContentWithImages(ref)}</div>`;
       });
     }
 
@@ -143,6 +164,8 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
     const iframe = document.getElementById('pdfFrame');
     if (result.success) {
       iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
+      // Section synchronization: inject overlay or use a custom preview for click events
+      // Example: If you use an HTML preview, add data-section-id to elements and listen for clicks
     } else {
       iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
     }
@@ -158,6 +181,17 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  // Section synchronization: Scroll LHS to section when clicking on RHS (if you use HTML preview)
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.sectionId) {
+      const el = document.querySelector(`[data-section-id="${event.data.sectionId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    }
+  });
 
   renderEditableStructure();
   regenerateMarkdown();
