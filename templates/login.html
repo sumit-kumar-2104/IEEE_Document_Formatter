@@ -2,51 +2,38 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
+<div class="auth-container">
   <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="password" id="password" placeholder="Password" required>
-  <button onclick="login()">Login</button>
-  <div id="message"></div>
-  <div class="link">
-    Don't have an account? <a href="/signup.html">Sign Up</a> 
-  </div>
 
+  <form id="loginForm" class="auth-form">
+    <div class="form-group">
+      <input type="email" id="email" placeholder="Email" required>
+    </div>
 
-<<<<<<< HEAD
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password" required>
+    </div>
 
-   <script>
-    async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+    <button type="submit" class="btn-ieee-solid">Login</button>
 
-      try {
-        const response = await fetch('/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
+    <div id="message" class="auth-message"></div>
 
-        const data = await response.json();
-        document.getElementById('message').textContent = data.message;
+    <div class="auth-footer">
+      Don't have an account?
+      <a href="/signup.html" class="auth-link">Sign Up</a>
+    </div>
+  </form>
+</div>
 
-        if (data.success) {
-          window.location.href = data.redirect;
-        }
-      } catch (err) {
-        console.error('Login failed:', err);
-        document.getElementById('message').textContent = 'Something went wrong!';
-      }
-=======
 <script>
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    
+
     const email = document.getElementById('email').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const messageEl = document.getElementById('message');
-    const submitBtn = document.querySelector('button[type="submit"]');
+    const submitBtn = this.querySelector('button');
 
-    // Clear previous messages
     messageEl.textContent = '';
     submitBtn.disabled = true;
 
@@ -55,11 +42,11 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include'  // REQUIRED FOR SESSIONS
+        credentials: 'include'
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         messageEl.textContent = 'Login successful! Redirecting...';
         messageEl.style.color = 'green';
@@ -76,13 +63,10 @@
       messageEl.style.color = 'red';
     } finally {
       submitBtn.disabled = false;
->>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
     }
-  </script>
-{% endblock %} 
+  });
+</script>
 
-<<<<<<< HEAD
-=======
 <style>
   .auth-container {
     max-width: 400px;
@@ -94,12 +78,7 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     border-top: 4px solid #00629B;
   }
->>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
-
-
-<<<<<<< HEAD
-=======
   .auth-form {
     display: flex;
     flex-direction: column;
@@ -167,4 +146,3 @@
   }
 </style>
 {% endblock %}
->>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
