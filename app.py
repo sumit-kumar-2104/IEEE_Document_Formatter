@@ -3,9 +3,8 @@ import os
 import uuid
 import json
 import shutil
-import bcrypt
-from pymongo import MongoClient
 from datetime import datetime
+<<<<<<< HEAD
 from dateutil import parser
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import os, uuid, json
@@ -14,32 +13,58 @@ from utils.parsers import parse_input_file
 from utils.title_suggested import suggest_titles
 from utils.llm_formatter import generate_ieee_markdown
 from utils.latex_formatter import generate_pdf_from_data
+=======
+from pymongo import MongoClient
+import bcrypt
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 from werkzeug.utils import secure_filename
 
 
-# ===========================================
-# 🔗 MongoDB setup
-# ===========================================
+# ==============================
+# 🔗 MongoDB Setup
+# ==============================
 client = MongoClient("mongodb://localhost:27017/")
 db = client['authdb']
 users_collection = db['users']
 
-# ===========================================
-# 🔧 Flask setup
-# ===========================================
+# ==============================
+# 🔧 Flask Setup
+# ==============================
 UPLOAD_FOLDER = "uploads"
 TEMP_FOLDER = "temp_data"
 
 app = Flask(__name__, static_url_path='/static')
 app.secret_key = 'dev-key-93c1745e3f2342c9bfa814bcdf2fd819'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+<<<<<<< HEAD
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TEMP_FOLDER, exist_ok=True)
+=======
+app.config['TEMP_FOLDER'] = TEMP_FOLDER
+app.config['STATIC_FOLDER'] = STATIC_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-# ===========================================
-# 🔐 Authentication routes
-# ===========================================
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(TEMP_FOLDER, exist_ok=True)
+os.makedirs(os.path.join(STATIC_FOLDER, 'pdfs'), exist_ok=True)
+
+# ==============================
+# 🔐 Authentication Decorator
+# ==============================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            flash('Please log in first!', 'warning')
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
+
+# ==============================
+# 📝 Auth Routes
+# ==============================
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -57,18 +82,27 @@ def signup():
         "email": email,
         "password": hashed_password,
         "phone": phone,
+<<<<<<< HEAD
         "uploads": []
     })
 
     return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
 
+=======
+        "uploads": [],
+        "created_at": datetime.utcnow()
+    })
+
+    return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
 
+<<<<<<< HEAD
     user = users_collection.find_one({"email": email})
     if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
         session['user'] = user['email']
@@ -88,6 +122,34 @@ def logout():
 # ========================
 # 🌐 Page Routes
 # ========================
+=======
+    if not email or '@' not in email or not password:
+        return jsonify({"success": False, "message": "Invalid credentials"}), 400
+
+    user = users_collection.find_one({"email": email})
+    if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password']):
+        return jsonify({"success": False, "message": "Invalid email or password"}), 401
+
+    session.clear()
+    session['user'] = email
+    session.permanent = True
+
+    return jsonify({
+        "success": True,
+        "message": "Login successful",
+        "redirect": "/dashboard"
+    })
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Logged out successfully!', 'info')
+    return redirect(url_for('login_page'))
+
+# ==============================
+# 🌐 Page Routes
+# ==============================
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 @app.route('/')
 def home():
     return redirect(url_for('login_page'))
@@ -106,11 +168,16 @@ def signup_page():
 
 @app.route('/dashboard')
 def dashboard():
+<<<<<<< HEAD
     if 'user' not in session:
         return redirect(url_for('login_page'))
 
     user = users_collection.find_one({"email": session["user"]})
     uploads = user.get("uploads", [])
+=======
+    user = users_collection.find_one({"email": session['user']})
+    uploads = sorted(user.get('uploads', []), key=lambda x: x.get('parsed_on', datetime.min), reverse=True)
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
     return render_template('dashboard.html', uploads=uploads)
 
 @app.route('/index.html')
@@ -119,14 +186,21 @@ def index():
         return redirect(url_for('login_page'))
     return render_template('index.html')
 
+<<<<<<< HEAD
 # ========================
 # 📤 File Upload + Parsing
 # ========================
+=======
+# ==============================
+# 📤 Upload & Parse Document
+# ==============================
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'user' not in session:
         return redirect(url_for('login_page'))
 
+<<<<<<< HEAD
     uploaded_file = request.files.get('file')
     if not uploaded_file:
         return jsonify({"error": "No file uploaded"}), 400
@@ -196,9 +270,49 @@ def upload():
             {"email": email},
             {"$push": {"uploads": uploads_entry}}
         )
+=======
+    file = request.files['file']
+    if file.filename == '':
+        flash('No selected file', 'error')
+        return redirect(request.url)
 
-        return redirect(url_for("editor"))
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(file_path)
 
+    # Dummy Parsed Data (Replace with real parser)
+    parsed_data = {
+        "title": "Sample IEEE Document",
+        "abstract": "This is a sample abstract...",
+        "keywords": "IEEE, Formatting, Template",
+        "sections": [{
+            "heading": "Introduction",
+            "content": "Sample introduction content...",
+            "images": []
+        }],
+        "references": ["1. Author, 'Title', Journal, 2023"]
+    }
+
+    temp_id = str(uuid.uuid4())
+    session['temp_id'] = temp_id
+
+    with open(os.path.join(TEMP_FOLDER, f"{temp_id}.json"), "w") as f:
+        json.dump(parsed_data, f, indent=2)
+
+    users_collection.update_one(
+        {"email": session['user']},
+        {"$push": {"uploads": {
+            "file_name": filename,
+            "temp_id": temp_id,
+            "parsed_on": datetime.utcnow(),
+            "title": parsed_data.get("title", "Untitled Document")
+        }}}
+    )
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
+
+    return redirect(url_for('editor'))
+
+<<<<<<< HEAD
     except Exception as e:
         print("UPLOAD ERROR:", str(e))
         return jsonify({"error": "Internal server error"}), 500
@@ -206,6 +320,11 @@ def upload():
 # ========================
 # 📝 Editor View
 # ========================
+=======
+# ==============================
+# 📝 Editor View
+# ==============================
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 @app.route('/editor')
 def editor():
     if 'user' not in session:
@@ -213,27 +332,53 @@ def editor():
 
     temp_id = session.get('temp_id')
     if not temp_id:
+<<<<<<< HEAD
         return "Missing session data", 400
 
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
     if not os.path.exists(temp_path):
         return "Parsed document not found", 400
+=======
+        flash('No document in session', 'error')
+        return redirect(url_for('index'))
 
-    with open(temp_path, "r", encoding="utf-8") as f:
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if not os.path.exists(temp_path):
+        flash('Document not found', 'error')
+        return redirect(url_for('index'))
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
+
+    with open(temp_path) as f:
         parsed_data = json.load(f)
 
+<<<<<<< HEAD
     return render_template('editor.html', parsed=parsed_data)
 
 # ========================
 # 🔁 Resume Editing
 # ========================
+=======
+    return render_template('editor.html', parsed=parsed_data, from_dashboard=request.args.get('from_dashboard'))
+
+# ==============================
+# 🔁 Resume Editing
+# ==============================
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 @app.route('/resume/<temp_id>')
 def resume(temp_id):
+<<<<<<< HEAD
     if 'user' not in session:
         return redirect(url_for('login_page'))
+=======
+    user = users_collection.find_one({"email": session['user'], "uploads.temp_id": temp_id}, {"uploads.$": 1})
+    if not user:
+        flash('Document not found', 'error')
+        return redirect(url_for('dashboard'))
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
     if not os.path.exists(temp_path):
+<<<<<<< HEAD
         users_collection.update_one(
             {"email": session["user"]},
             {"$pull": {"uploads": {"temp_id": temp_id}}}
@@ -264,10 +409,16 @@ def generate_ieee():
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
     if not os.path.exists(temp_path):
         return jsonify({"error": "Parsed document not found"}), 400
+=======
+        users_collection.update_one({"email": session['user']}, {"$pull": {"uploads": {"temp_id": temp_id}}})
+        flash('Document removed from history', 'error')
+        return redirect(url_for('dashboard'))
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
-    with open(temp_path, "r", encoding="utf-8") as f:
+    with open(temp_path) as f:
         parsed_data = json.load(f)
 
+<<<<<<< HEAD
     try:
         markdown = generate_ieee_markdown(parsed_data)
         return jsonify({"markdown": markdown})
@@ -318,16 +469,70 @@ def delete_upload(temp_id):
     )
 
     # Remove temp file
+=======
+    return render_template('editor.html', parsed=parsed_data, from_dashboard=True)
+
+# ==============================
+# 📄 PDF Generation (Dummy)
+# ==============================
+@app.route('/generate_pdf', methods=['POST'])
+@login_required
+def generate_pdf():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data received"}), 400
+
+    temp_id = session.get('temp_id')
+    if temp_id:
+        with open(os.path.join(TEMP_FOLDER, f"{temp_id}.json"), "w") as f:
+            json.dump(data, f, indent=2)
+
+    pdf_filename = f"{temp_id}.pdf"
+    with open(os.path.join(STATIC_FOLDER, 'pdfs', pdf_filename), 'wb') as f:
+        f.write(b'%PDF-1.4\n%% Dummy PDF content')
+
+    return jsonify({"success": True, "pdf_url": f"/static/pdfs/{pdf_filename}?{datetime.now().timestamp()}"})
+
+# ==============================
+# 🗑 Delete Upload
+# ==============================
+@app.route('/delete_upload/<temp_id>', methods=['POST'])
+@login_required
+def delete_upload(temp_id):
+    result = users_collection.update_one({"email": session['user']}, {"$pull": {"uploads": {"temp_id": temp_id}}})
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    pdf_path = os.path.join(STATIC_FOLDER, 'pdfs', f"{temp_id}.pdf")
+
     if os.path.exists(temp_path):
         os.remove(temp_path)
+<<<<<<< HEAD
 
     return redirect(url_for("dashboard"))
+=======
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
 
+<<<<<<< HEAD
+=======
+# ==============================
+# 🖼️ Static Files
+# ==============================
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.config['STATIC_FOLDER'], filename)
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
 
-# ===========================================
+# ==============================
 # 🚀 Run Server
+<<<<<<< HEAD
 # ===========================================
 if __name__ == "__main__":
     app.run(debug=True)
+=======
+# ==============================
+if __name__ == '__main__':
+    app.run(debug=True, host='127.0.0.1', port=5000)
+>>>>>>> f46904fe22f2cfeb3c3668920e76ed841f8446de
