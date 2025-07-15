@@ -1,126 +1,44 @@
 {% extends "base_auth.html" %}
-{% block title %}Login - IEEE Document Formatter{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-  <div class="auth-header">
-    <h2>IEEE Document Formatter</h2>
-    <p>Sign in to access your documents</p>
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="password" id="password" placeholder="Password" required>
+  <button onclick="login()">Login</button>
+  <div id="message"></div>
+  <div class="link">
+    Don't have an account? <a href="/signup.html">Sign Up</a> 
   </div>
 
-  <form id="loginForm" class="auth-form">
-    <div class="form-group">
-      <input type="email" id="email" name="email" placeholder="Email" required>
-    </div>
-    <div class="form-group">
-      <input type="password" id="password" name="password" placeholder="Password" required>
-    </div>
-    <button type="submit" class="btn-ieee-solid">Login</button>
-    <div id="message" class="auth-message"></div>
-    <div class="auth-footer">
-      Don't have an account? <a href="/signup.html" class="auth-link">Sign Up</a>
-    </div>
-  </form>
-</div>
 
-<script>
-  document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const messageEl = document.getElementById('message');
 
-    try {
-      const response = await fetch('/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
-      });
+   <script>
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
-      const data = await response.json();
-      
-      if (data.success) {
-        window.location.href = data.redirect;
-      } else {
-        messageEl.textContent = data.message;
-        messageEl.style.color = 'red';
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+        document.getElementById('message').textContent = data.message;
+
+        if (data.success) {
+          window.location.href = data.redirect;
+        }
+      } catch (err) {
+        console.error('Login failed:', err);
+        document.getElementById('message').textContent = 'Something went wrong!';
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      messageEl.textContent = 'An error occurred during login';
-      messageEl.style.color = 'red';
     }
-  });
-</script>
+  </script>
+{% endblock %} 
 
-<style>
-  .auth-container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border-top: 4px solid #00629B;
-  }
 
-  .auth-header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
 
-  .auth-header h2 {
-    color: #00629B;
-    margin-bottom: 0.5rem;
-  }
 
-  .auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .form-group input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
-    font-size: 1rem;
-  }
-
-  .btn-ieee-solid {
-    background: #00629B;
-    color: white;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-
-  .auth-message {
-    text-align: center;
-    margin: 1rem 0;
-    min-height: 1.5rem;
-  }
-
-  .auth-footer {
-    text-align: center;
-    color: #4A5568;
-    margin-top: 1rem;
-  }
-
-  .auth-link {
-    color: #00629B;
-    font-weight: bold;
-    text-decoration: none;
-  }
-</style>
-{% endblock %}
