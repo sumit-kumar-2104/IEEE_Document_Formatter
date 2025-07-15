@@ -27,34 +27,41 @@
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const messageEl = document.getElementById('message');
+    const submitBtn = document.querySelector('button[type="submit"]');
+
+    // Clear previous messages
+    messageEl.textContent = '';
+    submitBtn.disabled = true;
 
     try {
       const response = await fetch('/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'  // REQUIRED FOR SESSIONS
       });
 
       const data = await response.json();
       
       if (data.success) {
-        window.location.href = data.redirect;
+        messageEl.textContent = 'Login successful! Redirecting...';
+        messageEl.style.color = 'green';
+        setTimeout(() => {
+          window.location.href = data.redirect || '/dashboard';
+        }, 1000);
       } else {
-        messageEl.textContent = data.message;
+        messageEl.textContent = data.message || 'Invalid email or password';
         messageEl.style.color = 'red';
       }
     } catch (error) {
       console.error('Login error:', error);
-      messageEl.textContent = 'An error occurred during login';
+      messageEl.textContent = 'Network error. Please try again.';
       messageEl.style.color = 'red';
+    } finally {
+      submitBtn.disabled = false;
     }
   });
 </script>
@@ -62,6 +69,7 @@
 <style>
   .auth-container {
     max-width: 400px;
+    width: 100%;
     margin: 0 auto;
     padding: 2rem;
     background: white;
@@ -92,6 +100,12 @@
     border: 1px solid #E2E8F0;
     border-radius: 6px;
     font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus {
+    border-color: #00629B;
+    outline: none;
   }
 
   .btn-ieee-solid {
@@ -103,24 +117,41 @@
     font-weight: bold;
     cursor: pointer;
     font-size: 1rem;
+    transition: background-color 0.2s;
+  }
+
+  .btn-ieee-solid:hover {
+    background: #004f7c;
+  }
+
+  .btn-ieee-solid:disabled {
+    background: #CBD5E0;
+    cursor: not-allowed;
   }
 
   .auth-message {
     text-align: center;
     margin: 1rem 0;
     min-height: 1.5rem;
+    font-size: 0.9rem;
   }
 
   .auth-footer {
     text-align: center;
     color: #4A5568;
     margin-top: 1rem;
+    font-size: 0.9rem;
   }
 
   .auth-link {
     color: #00629B;
     font-weight: bold;
     text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .auth-link:hover {
+    text-decoration: underline;
   }
 </style>
 {% endblock %}
