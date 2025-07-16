@@ -140,6 +140,172 @@
       background: #c62828;
       transform: translateY(-1px);
     }
+/* 
+    .dashboard-btn {
+  background-color: #0d47a1;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+} */
+
+.dashboard-btn:hover {
+  background-color: #1565c0;
+}
+/* index.html styling */
+  .form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-dark);
+  }
+
+  select, .file-input-container {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  select:focus, .file-input-container:hover {
+    border-color: var(--ieee-blue);
+    box-shadow: 0 0 0 2px rgba(0, 98, 155, 0.2);
+    outline: none;
+  }
+
+  .file-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .file-input-label {
+    flex-grow: 1;
+    padding: 0.8rem;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-input-btn {
+    background: var(--ieee-blue);
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+  }
+
+  .file-input-btn:hover {
+    background: var(--ieee-blue-light);
+  }
+
+  input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    padding: 0.8rem;
+    background: var(--ieee-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  button[type="submit"]:hover {
+    background: var(--ieee-blue-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  /* Back to Dashboard Button */
+  .back-btn-container {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--ieee-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+   .dashboard-btn {
+  /* background-color: #0d47a1; */
+  background: var(--ieee-blue);
+  color: white;
+  padding: 18px 18px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: px;
+  margin-right: 15px;
+}
+  .back-btn:hover {
+    background: var(--ieee-blue-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .back-btn i {
+    margin-right: 8px;
+  }
+  .ieee{
+    color: #0d47a1;;
+  }
+
   </style>
   {% block extra_css %}{% endblock %}
 </head>
@@ -150,16 +316,19 @@
         <div class="brand">
           <h1>IEEE Document Formatter</h1>
         </div>
-        {% if session.get('user') %}
+         {% if session.get('user') %}
         <div class="user-dropdown">
           <button class="user-btn">
-            {{ session.get('username', 'User') }} ▼
-          </button>
+             <!-- {{ session.get('username', 'User') }} ▼ 
+                 {{   session.get('username', 'user') }} ▼ -->
+                  <!-- {{ username}}▼ -->
+                     {{ username if username else session.get('username', 'User') }} ▼
+    
           <div class="dropdown-content">
             <a href="/logout">Logout</a>
           </div>
         </div>
-        {% endif %}
+        {% endif %} 
       </div>
     </div>
   </header>
@@ -169,5 +338,19 @@
   </main>
 
   {% block extra_js %}{% endblock %}
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const fileLabel = document.getElementById('fileLabel');
+    
+    fileInput.addEventListener('change', function(e) {
+      if (this.files && this.files.length > 0) {
+        fileLabel.textContent = this.files[0].name;
+      } else {
+        fileLabel.textContent = 'No file chosen';
+      }
+    });
+  });
+</script>
 </body>
 </html>
