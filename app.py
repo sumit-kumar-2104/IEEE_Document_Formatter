@@ -419,6 +419,28 @@ def delete_upload(temp_id):
 
     return redirect(url_for("dashboard"))
 
+
+@app.route('/save_document', methods=['POST'])
+def save_document():
+    if 'user' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    temp_id = session.get('temp_id')
+    
+    if not temp_id:
+        return jsonify({"error": "No document session found"}), 400
+    
+    try:
+        temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ===========================================
 # 🚀 Run Server
 # ===========================================

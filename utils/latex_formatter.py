@@ -3,6 +3,8 @@ import re
 import os
 import shutil
 from PIL import Image
+import base64
+import uuid
 
 IEEE_TEMPLATE = r"""
 \documentclass[conference]{IEEEtran}
@@ -12,6 +14,7 @@ IEEE_TEMPLATE = r"""
 \usepackage{caption}
 \usepackage{hyperref}
 \usepackage{booktabs}
+\usepackage[export]{adjustbox}
 
 \title{<< title >>}
 \author{}
@@ -84,17 +87,106 @@ def is_valid_png(filepath):
 image_pattern = re.compile(r'\[IMAGE:\s*([^\]]+)\]')
 table_pattern = re.compile(r'\[TABLE:\s*([^\]]+)\]')
 
-def render_images(content, temp_image_dir):
+def render_images(content, temp_image_dir, images_data=None):
+    import base64
+    import uuid
+    import os
+    from PIL import Image
+    import io
+    
     def replace_image(match):
         img_path = match.group(1).strip()
         
-        if img_path.startswith('/static/'):
+        print(f"[DEBUG] Processing image path: {img_path[:50]}...")
+        
+        # Handle base64 data URLs (uploaded images)
+        if img_path.startswith('data:image/'):
+            try:
+                print("[DEBUG] Processing base64 image")
+                
+                # Extract the image format and base64 data
+                header, encoded = img_path.split(',', 1)
+                image_format = header.split('/')[1].split(';')[0]  # jpeg, png, etc.
+                
+                # Decode base64 data to binary
+                image_data = base64.b64decode(encoded)
+                
+                # Generate unique filename
+                filename = f"uploaded_{uuid.uuid4().hex[:8]}.png"
+                full_dest = os.path.join(temp_image_dir, filename)
+                
+                print(f"[DEBUG] Saving base64 image to: {full_dest}")
+                
+                # Convert and save as PNG
+                if image_format.lower() in ['jpeg', 'jpg']:
+                    # For JPEG, convert to RGB first
+                    img = Image.open(io.BytesIO(image_data))
+                    img = img.convert('RGB')
+                    img.save(full_dest, 'PNG')
+                else:
+                    # For PNG and other formats, save directly
+                    with open(full_dest, 'wb') as f:
+                        f.write(image_data)
+                
+                print(f"[DEBUG] Image saved successfully: {os.path.exists(full_dest)}")
+                
+                # Find image metadata for styling
+                img_size = 'medium'
+                img_caption = "Uploaded Image"
+                
+                if images_data:
+                    for img_data in images_data:
+                        if img_data.get('path') == img_path:
+                            img_size = img_data.get('size', 'medium')
+                            img_caption = latex_escape(img_data.get('caption', img_caption))
+                            break
+                
+                # Determine alignment and width based on size
+                if img_size == 'small':
+                    alignment = r"\raggedright"
+                    width = "0.3\\textwidth"
+                elif img_size == 'large':
+                    alignment = r"\raggedleft"
+                    width = "0.8\\textwidth"
+                else:  # medium
+                    alignment = r"\centering"
+                    width = "0.5\\textwidth"
+                
+                # Generate LaTeX code
+                latex_code = (
+                    r"\begin{figure}[H]" + "\n"
+                    f"{alignment}" + "\n"
+                    f"\\includegraphics[width={width}]{{{filename}}}" + "\n"
+                    f"\\caption{{{img_caption}}}" + "\n"
+                    r"\end{figure}" + "\n"
+                )
+                
+                print(f"[DEBUG] Generated LaTeX code: {latex_code}")
+                return latex_code
+                
+            except Exception as e:
+                print(f"[ERROR] Failed to process base64 image: {e}")
+                return r"\textbf{[Base64 image processing failed]}"
+        
+        # Handle file path images (existing logic)
+        elif img_path.startswith('/static/'):
             full_src = img_path.lstrip('/')
         else:
             full_src = img_path.lstrip("/\\")
         
         filename = os.path.basename(img_path)
         full_dest = os.path.join(temp_image_dir, filename)
+
+        # Find image metadata for alignment and size
+        img_size = 'medium'
+        img_caption = f"Image: {latex_escape(filename)}"
+        
+        if images_data:
+            for img_data in images_data:
+                if img_data.get('path') == img_path or img_data.get('filename') == filename:
+                    img_size = img_data.get('size', 'medium')
+                    img_caption = latex_escape(img_data.get('caption', img_caption))
+                    break
 
         if os.path.exists(full_src):
             try:
@@ -104,11 +196,22 @@ def render_images(content, temp_image_dir):
                     if not convert_to_png(full_src, full_dest):
                         return r"\textbf{[Image conversion failed]}"
                 
+                # Determine alignment and width based on size
+                if img_size == 'small':
+                    alignment = r"\raggedright"
+                    width = "0.3\\textwidth"
+                elif img_size == 'large':
+                    alignment = r"\raggedleft"
+                    width = "0.8\\textwidth"
+                else:  # medium
+                    alignment = r"\centering"
+                    width = "0.5\\textwidth"
+                
                 return (
                     r"\begin{figure}[H]" + "\n"
-                    r"\centering" + "\n"
-                    f"\\includegraphics[width=0.5\\textwidth]{{{filename}}}" + "\n"
-                    f"\\caption{{Image: {latex_escape(filename)}}}" + "\n"
+                    f"{alignment}" + "\n"
+                    f"\\includegraphics[width={width}]{{{filename}}}" + "\n"
+                    f"\\caption{{{img_caption}}}" + "\n"
                     r"\end{figure}" + "\n"
                 )
             except Exception as e:
@@ -117,6 +220,9 @@ def render_images(content, temp_image_dir):
             return r"\textbf{[Image not found]}"
     
     return image_pattern.sub(replace_image, content)
+
+
+
 
 def render_tables(content, table_data):
     def replace_table(match):
@@ -197,16 +303,33 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
             
             # Process sections with inline table and image rendering
             for section in data.get("sections", []):
+                print(f"[DEBUG] Processing section: {section.get('heading', 'Unknown')}")
+                
                 section["heading"] = latex_escape(section.get("heading", ""))
                 raw_content = section.get("content", "")
+
+                # Get images data for this section
+                section_images = section.get("images", [])
+                if section_images:
+                    print(f"[DEBUG] Section has {len(section_images)} images")
+                    for i, img in enumerate(section_images):
+                        img_path = img.get('path', '')
+                        print(f"[DEBUG] Image {i}: {img_path[:50]}...")
+                        
+                        # **THIS IS THE KEY FIX** - Add image placeholders to content
+                        image_placeholder = f"[IMAGE: {img_path}]"
+                        raw_content += f"\n\n{image_placeholder}\n\n"
+                        print(f"[DEBUG] Added placeholder: {image_placeholder}")
                 
-                # First render images
-                rendered_content = render_images(raw_content, tmpdir)
+                # Now render images (including the base64 ones we just added)
+                rendered_content = render_images(raw_content, tmpdir, section_images)
                 # Then render tables inline
                 rendered_content = render_tables(rendered_content, table_data)
+                
                 # Finally, safely escape (preserving LaTeX commands)
                 section["content"] = safe_latex_escape(rendered_content, table_data)
                 
+                # Process subsections
                 for sub in section.get("subsections", []):
                     sub["heading"] = latex_escape(sub.get("heading", ""))
                     raw_sub_content = sub.get("content", "")
@@ -253,6 +376,16 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                         "log": error_log,
                         "tex_code": tex_code
                     }
+                
+            # Add debug logging
+            for section in data.get("sections", []):
+                print(f"[DEBUG] Processing section: {section.get('heading', 'Unknown')}")
+                if section.get("images"):
+                    print(f"[DEBUG] Section has {len(section['images'])} images")
+                    for i, img in enumerate(section['images']):
+                        print(f"[DEBUG] Image {i}: {img.get('path', 'No path')[:50]}...")
+                
+            
 
             # Check if PDF was generated
             pdf_path = Path(tmpdir) / "paper.pdf"
@@ -268,6 +401,8 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                     "log": log_output,
                     "tex_code": tex_code
                 }
+            
+            
 
     except FileNotFoundError as e:
         return {"error": f"Missing executable: {e.filename}. Please install LaTeX (texlive-full or similar)"}

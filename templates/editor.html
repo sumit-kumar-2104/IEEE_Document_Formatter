@@ -5,174 +5,1034 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
 {% endblock %}
 
 {% block content %}
-<h1 class="fadeInDown" style="color:  #0d47a1;">IEEE Document Editor</h1>
+<h1 class="fadeInDown" style="color: #0d47a1;">IEEE Document Editor</h1>
 
 {% if from_dashboard %}
 <div id="topBarButtons" style="position: fixed; top: 10px; right: 10px; z-index: 999;">
   <a href="/dashboard">
-    <button class="dashboard-btn"> Back to Dashboard</button>
-  </a>
-
+    <button class="dashboard-btn">Back to Dashboard</button>
   </a>
 </div>
 {% endif %}
 
-<div id="controlBar" style="margin-bottom: 1em; display: flex; gap: 10px;">
-  <button onclick="regenerateMarkdown()" style="   background:linear-gradient(135deg, #4776E6 0%, #8E54E9 100%);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;">🔄 Regenerate PDF</button>
-  <button onclick="downloadMarkdown()" style="background:linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;">⬇ Download Markdown</button>
+<div id="controlBar" style="margin-bottom: 1em; display: flex; gap: 10px; flex-wrap: wrap;">
+  <button onclick="regenerateMarkdown()" class="control-btn primary">🔄 Regenerate PDF</button>
+  <button onclick="downloadMarkdown()" class="control-btn secondary">⬇ Download Markdown</button>
+  <button onclick="addNewSection()" class="control-btn success">➕ Add Section</button>
+  <button onclick="addNewTable()" class="control-btn info">📊 Add Table</button>
+  <button onclick="saveDocument()" class="control-btn warning">💾 Save Document</button>
 </div>
 
 <div id="editorContainer" style="display: flex; gap: 1em; height: 85vh;">
-  <!-- 📝 Editable Structured Content (Left Panel) -->
-  <div id="structuredEditor" class="panel" style="flex: 1; border: 4px solid #757575; overflow-y: auto; max-height: 85vh;"></div>
+  <!-- 📝 Enhanced Editable Structured Content (Left Panel) -->
+  <div id="structuredEditor" class="panel editor-panel" style="flex: 1; border: 4px solid #757575; overflow-y: auto; max-height: 85vh; padding: 20px; background: rgba(255,255,255,0.95);">
+    <!-- Content will be dynamically rendered here -->
+  </div>
 
   <!-- 📄 LaTeX PDF Preview (Right Panel) -->
-  <div id="ieeePreview" class="panel" style="flex: 1; background-color: rgba(40, 40, 40, 0.95); border-left: 6px solid #757575; overflow-y: auto; max-height: 85vh;">
+  <div id="ieeePreview" class="panel preview-panel" style="flex: 1; background-color: rgba(40, 40, 40, 0.95); border-left: 6px solid #757575; overflow-y: auto; max-height: 85vh;">
     <iframe id="pdfFrame" src="" width="100%" height="100%" style="border: none; border-radius: 6px;"></iframe>
   </div>
 </div>
 
+<!-- Image Upload Modal -->
+<!-- Image Upload Modal -->
+<div id="imageModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Add Image</h3>
+    <div style="margin: 15px 0;">
+      <label for="imageInput" style="display: block; margin-bottom: 5px; font-weight: bold;">Select Image:</label>
+      <input type="file" id="imageInput" accept="image/*" 
+             style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; 
+                    background: white; cursor: pointer; display: block; box-sizing: border-box;" />
+    </div>
+    <div style="margin: 15px 0;">
+      <label for="imageCaptionInput" style="display: block; margin-bottom: 5px; font-weight: bold;">Caption:</label>
+      <input type="text" id="imageCaptionInput" placeholder="Image caption..." 
+             style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" />
+    </div>
+    <div style="margin: 15px 0;">
+      <label for="imageSizeSelect" style="display: block; margin-bottom: 5px; font-weight: bold;">Size:</label>
+      <select id="imageSizeSelect" 
+              style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+    <div style="text-align: right; margin-top: 20px;">
+      <button onclick="closeImageModal()" 
+              style="margin-right: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+      <button onclick="uploadImage()" class="control-btn primary" id="uploadBtn">Upload Image</button>
+    </div>
+  </div>
+</div>
+
+
+<style>
+.control-btn {
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.control-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.control-btn.primary { background: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%); }
+.control-btn.secondary { background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%); }
+.control-btn.success { background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%); }
+.control-btn.info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.control-btn.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.control-btn.danger { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
+
+.control-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.editor-panel {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+}
+
+.section-container {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(248, 249, 250, 0.9);
+  position: relative;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.section-label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.section-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.action-btn.add { background: #28a745; color: white; }
+.action-btn.delete { background: #dc3545; color: white; }
+.action-btn.move { background: #6c757d; color: white; }
+
+.action-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.editable-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  border: 2px dashed transparent;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.editable-title:focus {
+  border-color: #4776E6;
+  background: rgba(71, 118, 230, 0.1);
+  outline: none;
+}
+
+.editable-heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #34495e;
+  border: 2px dashed transparent;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 15px 0 10px 0;
+  transition: all 0.3s ease;
+}
+
+.editable-subheading {
+  font-size: 16px;
+  font-weight: 500;
+  color: #5a6c7d;
+  border: 2px dashed transparent;
+  padding: 8px;
+  border-radius: 5px;
+  margin: 10px 0 8px 0;
+  margin-left: 20px;
+  transition: all 0.3s ease;
+}
+
+.editable-para {
+  font-size: 14px;
+  color: #4a5568;
+  border: 2px dashed transparent;
+  padding: 12px;
+  border-radius: 5px;
+  margin: 10px 0;
+  min-height: 40px;
+  line-height: 1.8;
+  transition: all 0.3s ease;
+}
+
+.editable-heading:focus,
+.editable-subheading:focus,
+.editable-para:focus {
+  border-color: #4776E6;
+  background: rgba(71, 118, 230, 0.08);
+  outline: none;
+}
+
+.editable-heading:empty:before,
+.editable-subheading:empty:before,
+.editable-para:empty:before {
+  content: attr(placeholder);
+  color: #999;
+  font-style: italic;
+}
+
+.image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  background: rgba(255, 255, 255, 0.95);
+  position: relative;
+}
+
+.image-preview {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.image-preview.small {
+  max-width: 200px;
+}
+
+.image-preview.medium {
+  max-width: 400px;
+}
+
+.image-preview.large {
+  max-width: 600px;
+}
+
+
+.table-container {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  background: rgba(255, 255, 255, 0.95);
+  position: relative;
+  overflow-x: auto;
+}
+
+.editable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  background: white;
+}
+
+.editable-table td {
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  min-width: 80px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.editable-table td:focus {
+  background: rgba(71, 118, 230, 0.1);
+  outline: 2px solid #4776E6;
+}
+
+.editable-table .row-actions {
+  background: #f8f9fa;
+  width: 40px;
+  text-align: center;
+  border-left: 2px solid #dee2e6;
+}
+
+.subsection-container {
+  margin-left: 20px;
+  margin-top: 15px;
+  padding-left: 15px;
+  border-left: 3px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 15px;
+}
+
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 25px;
+  border: none;
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close:hover {
+  color: #000;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+#imageInput {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 1001;
+}
+
+.modal-content {
+  pointer-events: auto;
+}
+
+
+.success-message {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 5px;
+}
+</style>
+
 <script>
-  const parsedData = {{ parsed | tojson }};
-  let debounceTimer;
+const parsedData = {{ parsed | tojson }};
+let debounceTimer;
+let currentImageSection = null;
+let currentImageIndex = null;
+let isRendering = false;
 
-  function renderContentWithImages(content) {
-    return content.replace(/\[IMAGE:\s*(.*?)\]/g, (match, path) => {
-      return `<div><img src="${path.trim()}" style="max-width: 100%; border: 2px solid #888; border-radius: 4px; margin: 10px 0;" /></div>`;
-    }).replace(/\n/g, '<br>');
+// Initialize modal event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  setupModalEventListeners();
+  renderEditableStructure();
+  regenerateMarkdown();
+});
+
+function setupModalEventListeners() {
+  const modal = document.getElementById('imageModal');
+  const closeBtn = document.querySelector('.close');
+  const fileInput = document.getElementById('imageInput');
+  
+  // Close modal when clicking X
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeImageModal();
+    });
+  }
+  
+  // Prevent file input from triggering modal events
+  // Add this to your setupModalEventListeners function
+  if (fileInput) {
+    fileInput.addEventListener('click', function(e) {
+      console.log('File input clicked');
+      e.stopPropagation();
+    });
+    
+    fileInput.addEventListener('change', function(e) {
+      console.log('File input changed:', e.target.files);
+    });
   }
 
-  function renderTable(table, idx) {
-    let html = `<div class="table-block" data-table-id="${idx}"><table border="1" style="width:100%;margin:10px 0;">`;
-    table.forEach(row => {
-      html += "<tr>";
-      row.forEach(cell => {
-        html += `<td>${cell}</td>`;
-      });
-      html += "</tr>";
-    });
-    html += "</table></div>";
-    return html;
-  }
-
-  function renderEditableStructure() {
-    const container = document.getElementById('structuredEditor');
-    container.innerHTML = '';
-
-    container.innerHTML += `<div class="editable-heading" data-section-id="title">Title</div>
-      <div class="editable-para" contenteditable="true" data-key="title" data-section-id="title">${parsedData.title || ''}</div>`;
-
-    if (parsedData.abstract)
-      container.innerHTML += `<div class="editable-heading" data-section-id="abstract">Abstract</div>
-      <div class="editable-para" contenteditable="true" data-key="abstract" data-section-id="abstract">${renderContentWithImages(parsedData.abstract)}</div>`;
-
-    if (parsedData.keywords)
-      container.innerHTML += `<div class="editable-heading" data-section-id="keywords">Keywords</div>
-      <div class="editable-para" contenteditable="true" data-key="keywords" data-section-id="keywords">${renderContentWithImages(parsedData.keywords)}</div>`;
-
-    (parsedData.sections || []).forEach((sec, i) => {
-      container.innerHTML += `<div class="editable-heading" contenteditable="true" data-sec="${i}" data-sub="heading" data-section-id="section-${i}">${sec.heading}</div>
-        <div class="editable-para" contenteditable="true" data-sec="${i}" data-sub="content" data-section-id="section-${i}">${renderContentWithImages(sec.content)}</div>`;
-
-      if (sec.images) {
-        sec.images.forEach((img, j) => {
-          container.innerHTML += 
-            `<div class="image-block" style="margin: 10px 0;" data-sec="${i}" data-img="${j}" data-section-id="section-${i}-img-${j}">
-              <img src="${img.path}" style="max-width: 100%; max-height: 200px; display: block; margin-bottom: 5px;" />
-              <input type="text" class="image-caption" data-sec="${i}" data-img="${j}" value="${img.caption || ''}" placeholder="Caption..." style="width: 100%; margin-bottom: 5px;" />
-              <select class="image-size" data-sec="${i}" data-img="${j}" style="width: 100%;">
-                <option value="small" ${img.size === 'small' ? 'selected' : ''}>Small</option>
-                <option value="medium" ${img.size === 'medium' ? 'selected' : ''}>Medium</option>
-                <option value="large" ${img.size === 'large' ? 'selected' : ''}>Large</option>
-              </select>
-            </div>`;
-        });
-      }
-
-      (sec.subsections || []).forEach((sub, j) => {
-        container.innerHTML += `<div class="editable-subheading" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="heading" data-section-id="section-${i}-sub-${j}">${sub.heading}</div>
-          <div class="editable-para" contenteditable="true" data-sec="${i}" data-subsec="${j}" data-sub="content" data-section-id="section-${i}-sub-${j}">${renderContentWithImages(sub.content)}</div>`;
-      });
-    });
-
-    // Render tables
-    if (parsedData.tables && parsedData.tables.length > 0) {
-      container.innerHTML += `<div class="editable-heading" data-section-id="tables">Tables</div>`;
-      parsedData.tables.forEach((table, idx) => {
-        container.innerHTML += renderTable(table, idx);
-      });
+  
+  // Close modal when clicking backdrop only
+  modal.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeImageModal();
     }
+  });
+  
+  // Prevent modal content clicks from closing modal
+  const modalContent = modal.querySelector('.modal-content');
+  if (modalContent) {
+    modalContent.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+}
 
-    if (parsedData.references && parsedData.references.length > 0) {
-      container.innerHTML += `<div class="editable-heading" data-section-id="references">References</div>`;
-      parsedData.references.forEach((ref, i) => {
-        container.innerHTML += `<div class="editable-para" contenteditable="true" data-ref="${i}" data-section-id="ref-${i}">${renderContentWithImages(ref)}</div>`;
-      });
+
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+  
+  // Reset form inputs
+  document.getElementById('imageInput').value = '';
+  document.getElementById('imageCaptionInput').value = '';
+  document.getElementById('imageSizeSelect').value = 'medium';
+  
+  // Clear current section reference
+  currentImageSection = null;
+  currentImageIndex = null;
+  
+  // Reset button state
+  const uploadBtn = document.getElementById('uploadBtn');
+  uploadBtn.textContent = 'Upload Image';
+  uploadBtn.disabled = false;
+}
+
+function uploadImage() {
+  const fileInput = document.getElementById('imageInput');
+  const captionInput = document.getElementById('imageCaptionInput');
+  const sizeSelect = document.getElementById('imageSizeSelect');
+  const uploadBtn = document.getElementById('uploadBtn');
+  
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select an image file');
+    return;
+  }
+  
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please select a valid image file');
+    return;
+  }
+  
+  // Validate file size (5MB limit)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File size must be less than 5MB');
+    return;
+  }
+  
+  // Show loading state
+  uploadBtn.textContent = 'Uploading...';
+  uploadBtn.disabled = true;
+  
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      // Ensure section exists and has images array
+      if (!parsedData.sections[currentImageSection]) {
+        throw new Error('Invalid section selected');
+      }
+      
+      if (!parsedData.sections[currentImageSection].images) {
+        parsedData.sections[currentImageSection].images = [];
+      }
+      
+      // Create new image object
+      const newImage = {
+        path: e.target.result,
+        caption: captionInput.value.trim() || 'Image',
+        size: sizeSelect.value,
+        filename: file.name,
+        type: file.type
+      };
+      
+      // Add to section
+      parsedData.sections[currentImageSection].images.push(newImage);
+      
+      // Close modal and re-render
+      closeImageModal();
+      renderEditableStructure();
+      
+      // Trigger PDF regeneration
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        regenerateMarkdown();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error processing image: ' + error.message);
+      
+      // Reset button state
+      uploadBtn.textContent = 'Upload Image';
+      uploadBtn.disabled = false;
     }
+  };
+  
+  reader.onerror = function() {
+    alert('Error reading file. Please try again.');
+    uploadBtn.textContent = 'Upload Image';
+    uploadBtn.disabled = false;
+  };
+  
+  reader.readAsDataURL(file);
+}
 
-    document.querySelectorAll('[contenteditable]').forEach(el => {
-      el.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          captureEditedData();
-          regenerateMarkdown();
-        }, 800);
-      });
+function renderContentWithImages(content) {
+  if (!content) return '';
+  
+  return content.replace(/\[IMAGE:\s*(.*?)\]/g, (match, path) => {
+    return `<div class="inline-image"><img src="${path.trim()}" style="max-width: 100%; border: 2px solid #888; border-radius: 4px; margin: 10px 0;" /></div>`;
+  }).replace(/\[TABLE:\s*(.*?)\]/g, (match, tableId) => {
+    return `<div class="inline-table-ref" data-table-id="${tableId}" style="background: #e3f2fd; padding: 5px; border-radius: 4px; margin: 5px 0; font-style: italic;">[Table Reference: ${tableId}]</div>`;
+  }).replace(/\n/g, '<br>');
+}
+
+function createSectionElement(section, index) {
+  const sectionDiv = document.createElement('div');
+  sectionDiv.className = 'section-container';
+  sectionDiv.dataset.sectionIndex = index;
+
+  sectionDiv.innerHTML = `
+    <div class="section-header">
+      <span class="section-label">Section ${index + 1}</span>
+      <div class="section-actions">
+        <button class="action-btn add" onclick="addSubsection(${index})">+ Sub</button>
+        <button class="action-btn add" onclick="addImageToSection(${index})">📷</button>
+        <button class="action-btn move" onclick="moveSection(${index}, 'up')">↑</button>
+        <button class="action-btn move" onclick="moveSection(${index}, 'down')">↓</button>
+        <button class="action-btn delete" onclick="deleteSection(${index})">🗑</button>
+      </div>
+    </div>
+    <div class="editable-heading" contenteditable="true" data-sec="${index}" data-sub="heading" 
+         placeholder="Enter section heading...">${section.heading || ''}</div>
+    <div class="editable-para" contenteditable="true" data-sec="${index}" data-sub="content" 
+         placeholder="Enter section content...">${renderContentWithImages(section.content || '')}</div>
+    <div class="section-images" data-sec="${index}"></div>
+    <div class="section-subsections" data-sec="${index}"></div>
+  `;
+
+  // Render images
+  const imagesContainer = sectionDiv.querySelector('.section-images');
+  if (section.images && section.images.length > 0) {
+    section.images.forEach((img, imgIndex) => {
+      const imageDiv = createImageElement(img, index, imgIndex);
+      imagesContainer.appendChild(imageDiv);
     });
   }
 
-  function captureEditedData() {
-    document.querySelectorAll('[contenteditable]').forEach(el => {
-      const key = el.dataset.key;
-      const sec = el.dataset.sec;
-      const subsec = el.dataset.subsec;
-      const sub = el.dataset.sub;
-      const ref = el.dataset.ref;
-      const text = el.innerText.trim();
-
-      if (key) parsedData[key] = text;
-      else if (ref !== undefined) parsedData.references[ref] = text;
-      else if (sec !== undefined && subsec !== undefined) {
-        parsedData.sections[sec].subsections[subsec][sub] = text;
-      } else if (sec !== undefined) {
-        parsedData.sections[sec][sub] = text;
-      }
+  // Render subsections
+  const subsectionsContainer = sectionDiv.querySelector('.section-subsections');
+  if (section.subsections && section.subsections.length > 0) {
+    section.subsections.forEach((subsection, subIndex) => {
+      const subsectionDiv = createSubsectionElement(subsection, index, subIndex);
+      subsectionsContainer.appendChild(subsectionDiv);
     });
+  }
 
-    document.querySelectorAll('.image-caption').forEach(el => {
-      const sec = el.dataset.sec;
-      const img = el.dataset.img;
+  return sectionDiv;
+}
+
+function createImageElement(img, sectionIndex, imageIndex) {
+  const imageDiv = document.createElement('div');
+  imageDiv.className = 'image-container';
+  imageDiv.innerHTML = `
+    <div class="section-header">
+      <span class="section-label">Image ${imageIndex + 1}</span>
+      <div class="section-actions">
+        <button class="action-btn delete" onclick="deleteImage(${sectionIndex}, ${imageIndex})">🗑</button>
+      </div>
+    </div>
+    <img src="${img.path}" class="image-preview ${img.size || 'medium'}" alt="${img.caption || 'Image'}" />
+    <input type="text" class="image-caption" data-sec="${sectionIndex}" data-img="${imageIndex}" 
+           value="${img.caption || ''}" placeholder="Enter image caption..." 
+           style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;" />
+    <select class="image-size" data-sec="${sectionIndex}" data-img="${imageIndex}" 
+            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      <option value="small" ${img.size === 'small' ? 'selected' : ''}>Small</option>
+      <option value="medium" ${img.size === 'medium' ? 'selected' : ''}>Medium</option>
+      <option value="large" ${img.size === 'large' ? 'selected' : ''}>Large</option>
+    </select>
+  `;
+  return imageDiv;
+}
+function handleImageSizeChange(sectionIndex, imageIndex, newSize) {
+  // Update the data model
+  if (parsedData.sections[sectionIndex] && parsedData.sections[sectionIndex].images && parsedData.sections[sectionIndex].images[imageIndex]) {
+    parsedData.sections[sectionIndex].images[imageIndex].size = newSize;
+  }
+  
+  // Update only the specific image element
+  const imageElement = document.querySelector(`img[data-sec="${sectionIndex}"][data-img="${imageIndex}"]`);
+  if (imageElement) {
+    imageElement.className = `image-preview ${newSize}`;
+  }
+  
+  // Trigger PDF regeneration
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    regenerateMarkdown();
+  }, 500);
+}
+
+
+function createSubsectionElement(subsection, sectionIndex, subsectionIndex) {
+  const subsectionDiv = document.createElement('div');
+  subsectionDiv.className = 'subsection-container';
+
+  subsectionDiv.innerHTML = `
+    <div class="section-header">
+      <span class="section-label">Subsection ${subsectionIndex + 1}</span>
+      <div class="section-actions">
+        <button class="action-btn delete" onclick="deleteSubsection(${sectionIndex}, ${subsectionIndex})">🗑</button>
+      </div>
+    </div>
+    <div class="editable-subheading" contenteditable="true" data-sec="${sectionIndex}" data-subsec="${subsectionIndex}" 
+         data-sub="heading" placeholder="Enter subsection heading...">${subsection.heading || ''}</div>
+    <div class="editable-para" contenteditable="true" data-sec="${sectionIndex}" data-subsec="${subsectionIndex}" 
+         data-sub="content" placeholder="Enter subsection content...">${renderContentWithImages(subsection.content || '')}</div>
+  `;
+
+  return subsectionDiv;
+}
+
+function createTableElement(table, tableIndex) {
+  const tableDiv = document.createElement('div');
+  tableDiv.className = 'table-container';
+  tableDiv.innerHTML = `
+    <div class="section-header">
+      <span class="section-label">Table ${tableIndex + 1}</span>
+      <div class="section-actions">
+        <button class="action-btn add" onclick="addTableRow(${tableIndex})">+ Row</button>
+        <button class="action-btn add" onclick="addTableColumn(${tableIndex})">+ Col</button>
+        <button class="action-btn delete" onclick="deleteTable(${tableIndex})">🗑</button>
+      </div>
+    </div>
+    <table class="editable-table" data-table-id="${tableIndex}">
+      ${table.map((row, rowIndex) => `
+        <tr>
+          ${row.map((cell, colIndex) => `
+            <td contenteditable="true" data-table="${tableIndex}" data-row="${rowIndex}" data-col="${colIndex}">${cell}</td>
+          `).join('')}
+          <td class="row-actions">
+            <button class="action-btn delete" onclick="deleteTableRow(${tableIndex}, ${rowIndex})">🗑</button>
+          </td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+  return tableDiv;
+}
+
+function renderEditableStructure() {
+  if (isRendering) return;
+  isRendering = true;
+
+  const container = document.getElementById('structuredEditor');
+  container.innerHTML = '';
+
+  // Title
+  const titleDiv = document.createElement('div');
+  titleDiv.innerHTML = `
+    <div class="editable-title" contenteditable="true" data-key="title" placeholder="Enter document title...">${parsedData.title || ''}</div>
+  `;
+  container.appendChild(titleDiv);
+
+  // Abstract
+  if (parsedData.abstract !== undefined) {
+    const abstractDiv = document.createElement('div');
+    abstractDiv.innerHTML = `
+      <div class="section-header">
+        <span class="section-label">Abstract</span>
+      </div>
+      <div class="editable-para" contenteditable="true" data-key="abstract" placeholder="Enter abstract...">${renderContentWithImages(parsedData.abstract)}</div>
+    `;
+    container.appendChild(abstractDiv);
+  }
+
+  // Keywords
+  if (parsedData.keywords !== undefined) {
+    const keywordsDiv = document.createElement('div');
+    keywordsDiv.innerHTML = `
+      <div class="section-header">
+        <span class="section-label">Keywords</span>
+      </div>
+      <div class="editable-para" contenteditable="true" data-key="keywords" placeholder="Enter keywords...">${renderContentWithImages(parsedData.keywords)}</div>
+    `;
+    container.appendChild(keywordsDiv);
+  }
+
+  // Sections
+  if (parsedData.sections && parsedData.sections.length > 0) {
+    parsedData.sections.forEach((section, index) => {
+      const sectionElement = createSectionElement(section, index);
+      container.appendChild(sectionElement);
+    });
+  }
+
+  // Tables
+  if (parsedData.tables && parsedData.tables.length > 0) {
+    const tablesHeader = document.createElement('div');
+    tablesHeader.innerHTML = `
+      <div class="section-header">
+        <span class="section-label">Tables</span>
+        <div class="section-actions">
+          <button class="action-btn add" onclick="addNewTable()">+ Table</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(tablesHeader);
+
+    parsedData.tables.forEach((table, index) => {
+      const tableElement = createTableElement(table, index);
+      container.appendChild(tableElement);
+    });
+  }
+
+  // References
+  if (parsedData.references && parsedData.references.length > 0) {
+    const referencesDiv = document.createElement('div');
+    referencesDiv.innerHTML = `
+      <div class="section-header">
+        <span class="section-label">References</span>
+        <div class="section-actions">
+          <button class="action-btn add" onclick="addReference()">+ Reference</button>
+        </div>
+      </div>
+    `;
+    
+    parsedData.references.forEach((ref, index) => {
+      const refDiv = document.createElement('div');
+      refDiv.innerHTML = `
+        <div style="display: flex; align-items: flex-start; margin: 5px 0; gap: 10px;">
+          <div class="editable-para" contenteditable="true" data-ref="${index}" style="flex: 1;">${renderContentWithImages(ref)}</div>
+          <button class="action-btn delete" onclick="deleteReference(${index})">🗑</button>
+        </div>
+      `;
+      referencesDiv.appendChild(refDiv);
+    });
+    
+    container.appendChild(referencesDiv);
+  }
+
+  // Add event listeners
+  addEventListeners();
+  isRendering = false;
+}
+
+function addEventListeners() {
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        captureEditedData();
+        regenerateMarkdown();
+      }, 1500);
+    });
+  });
+
+  document.querySelectorAll('.image-caption').forEach(el => {
+    el.addEventListener('change', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        captureEditedData();
+        regenerateMarkdown();
+      }, 1000);
+    });
+  });
+
+  document.querySelectorAll('.image-size').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const sectionIndex = parseInt(e.target.dataset.sec);
+      const imageIndex = parseInt(e.target.dataset.img);
+      const newSize = e.target.value;
+      
+      handleImageSizeChange(sectionIndex, imageIndex, newSize);
+    });
+  });
+}
+
+
+function captureEditedData() {
+  // Capture title
+  const titleEl = document.querySelector('[data-key="title"]');
+  if (titleEl) parsedData.title = titleEl.innerText.trim();
+
+  // Capture abstract
+  const abstractEl = document.querySelector('[data-key="abstract"]');
+  if (abstractEl) parsedData.abstract = abstractEl.innerText.trim();
+
+  // Capture keywords
+  const keywordsEl = document.querySelector('[data-key="keywords"]');
+  if (keywordsEl) parsedData.keywords = keywordsEl.innerText.trim();
+
+  // Capture sections
+  document.querySelectorAll('[data-sec]').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const subsec = el.dataset.subsec ? parseInt(el.dataset.subsec) : null;
+    const sub = el.dataset.sub;
+    const text = el.innerText.trim();
+
+    if (!parsedData.sections[sec]) parsedData.sections[sec] = { heading: '', content: '', subsections: [] };
+
+    if (subsec !== null) {
+      if (!parsedData.sections[sec].subsections[subsec]) {
+        parsedData.sections[sec].subsections[subsec] = { heading: '', content: '' };
+      }
+      parsedData.sections[sec].subsections[subsec][sub] = text;
+    } else {
+      parsedData.sections[sec][sub] = text;
+    }
+  });
+
+  // Capture references
+  document.querySelectorAll('[data-ref]').forEach(el => {
+    const ref = parseInt(el.dataset.ref);
+    if (parsedData.references) {
+      parsedData.references[ref] = el.innerText.trim();
+    }
+  });
+
+  // Capture image captions and sizes
+  document.querySelectorAll('.image-caption').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const img = parseInt(el.dataset.img);
+    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
       parsedData.sections[sec].images[img].caption = el.value.trim();
-    });
+    }
+  });
 
-    document.querySelectorAll('.image-size').forEach(el => {
-      const sec = el.dataset.sec;
-      const img = el.dataset.img;
+  document.querySelectorAll('.image-size').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const img = parseInt(el.dataset.img);
+    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
       parsedData.sections[sec].images[img].size = el.value;
-    });
-  }
+    }
+  });
 
-  async function regenerateMarkdown() {
+  // Capture table data
+  document.querySelectorAll('.editable-table').forEach(table => {
+    const tableId = parseInt(table.dataset.tableId);
+    const tableData = [];
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td[contenteditable]');
+      const rowData = [];
+      cells.forEach(cell => {
+        rowData.push(cell.innerText.trim());
+      });
+      if (rowData.length > 0) tableData.push(rowData);
+    });
+    
+    if (!parsedData.tables) parsedData.tables = [];
+    parsedData.tables[tableId] = tableData;
+  });
+}
+
+// Section management functions
+function addNewSection() {
+  if (!parsedData.sections) parsedData.sections = [];
+  parsedData.sections.push({
+    heading: 'New Section',
+    content: '',
+    subsections: [],
+    images: []
+  });
+  renderEditableStructure();
+}
+
+function deleteSection(index) {
+  if (confirm('Are you sure you want to delete this section?')) {
+    parsedData.sections.splice(index, 1);
+    renderEditableStructure();
+  }
+}
+
+function moveSection(index, direction) {
+  const sections = parsedData.sections;
+  if (direction === 'up' && index > 0) {
+    [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
+  } else if (direction === 'down' && index < sections.length - 1) {
+    [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
+  }
+  renderEditableStructure();
+}
+
+function addSubsection(sectionIndex) {
+  if (!parsedData.sections[sectionIndex].subsections) {
+    parsedData.sections[sectionIndex].subsections = [];
+  }
+  parsedData.sections[sectionIndex].subsections.push({
+    heading: 'New Subsection',
+    content: ''
+  });
+  renderEditableStructure();
+}
+
+function deleteSubsection(sectionIndex, subsectionIndex) {
+  if (confirm('Are you sure you want to delete this subsection?')) {
+    parsedData.sections[sectionIndex].subsections.splice(subsectionIndex, 1);
+    renderEditableStructure();
+  }
+}
+
+// Image management functions
+function addImageToSection(sectionIndex) {
+  if (sectionIndex === undefined || sectionIndex === null) {
+    alert('Invalid section index');
+    return;
+  }
+  
+  currentImageSection = sectionIndex;
+  currentImageIndex = null;
+  
+  // Show modal
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'block';
+  
+  // Focus on file input after modal animation
+  setTimeout(() => {
+    document.getElementById('imageInput').focus();
+  }, 300);
+}
+
+function deleteImage(sectionIndex, imageIndex) {
+  if (confirm('Are you sure you want to delete this image?')) {
+    parsedData.sections[sectionIndex].images.splice(imageIndex, 1);
+    renderEditableStructure();
+  }
+}
+
+// Table management functions
+function addNewTable() {
+  if (!parsedData.tables) parsedData.tables = [];
+  parsedData.tables.push([
+    ['Header 1', 'Header 2', 'Header 3'],
+    ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
+    ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
+  ]);
+  renderEditableStructure();
+}
+
+function deleteTable(tableIndex) {
+  if (confirm('Are you sure you want to delete this table?')) {
+    parsedData.tables.splice(tableIndex, 1);
+    renderEditableStructure();
+  }
+}
+
+function addTableRow(tableIndex) {
+  const table = parsedData.tables[tableIndex];
+  if (table && table.length > 0) {
+    const columnCount = table[0].length;
+    const newRow = new Array(columnCount).fill('New Cell');
+    table.push(newRow);
+    renderEditableStructure();
+  }
+}
+
+function addTableColumn(tableIndex) {
+  const table = parsedData.tables[tableIndex];
+  if (table && table.length > 0) {
+    table.forEach(row => {
+      row.push('New Cell');
+    });
+    renderEditableStructure();
+  }
+}
+
+function deleteTableRow(tableIndex, rowIndex) {
+  if (confirm('Are you sure you want to delete this row?')) {
+    const table = parsedData.tables[tableIndex];
+    if (table && table.length > 1) { // Keep at least one row
+      table.splice(rowIndex, 1);
+      renderEditableStructure();
+    } else {
+      alert('Cannot delete the last row of the table');
+    }
+  }
+}
+
+// Reference management functions
+function addReference() {
+  if (!parsedData.references) parsedData.references = [];
+  parsedData.references.push('New Reference');
+  renderEditableStructure();
+}
+
+function deleteReference(index) {
+  if (confirm('Are you sure you want to delete this reference?')) {
+    parsedData.references.splice(index, 1);
+    renderEditableStructure();
+  }
+}
+
+// Utility functions
+async function regenerateMarkdown() {
+  try {
     const res = await fetch('/generate_pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -181,38 +1041,54 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
 
     const result = await res.json();
     const iframe = document.getElementById('pdfFrame');
+    
     if (result.success) {
       iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
-      // Section synchronization: inject overlay or use a custom preview for click events
-      // Example: If you use an HTML preview, add data-section-id to elements and listen for clicks
     } else {
-      iframe.srcdoc = `<pre style="color:red;">${result.error || 'PDF generation failed'}</pre>`;
+      iframe.srcdoc = `<div style="color:red; padding: 20px; font-family: monospace;">
+        <h3>PDF Generation Error:</h3>
+        <pre>${result.error || 'Unknown error occurred'}</pre>
+      </div>`;
     }
+  } catch (error) {
+    console.error('Error regenerating PDF:', error);
+    const iframe = document.getElementById('pdfFrame');
+    iframe.srcdoc = `<div style="color:red; padding: 20px;">
+      <h3>Network Error:</h3>
+      <p>Failed to connect to server</p>
+    </div>`;
   }
+}
 
-  function downloadMarkdown() {
-    const text = document.getElementById('ieeePreview').textContent;
-    const blob = new Blob([text], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ieee_formatted.md";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // Section synchronization: Scroll LHS to section when clicking on RHS (if you use HTML preview)
-  window.addEventListener('message', function(event) {
-    if (event.data && event.data.sectionId) {
-      const el = document.querySelector(`[data-section-id="${event.data.sectionId}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.focus();
-      }
+async function saveDocument() {
+  try {
+    const res = await fetch('/save_document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsedData)
+    });
+    
+    const result = await res.json();
+    if (result.success) {
+      alert('Document saved successfully!');
+    } else {
+      alert('Error saving document: ' + result.error);
     }
-  });
+  } catch (error) {
+    console.error('Save error:', error);
+    alert('Error saving document');
+  }
+}
 
-  renderEditableStructure();
-  regenerateMarkdown();
+function downloadMarkdown() {
+  const text = JSON.stringify(parsedData, null, 2);
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "document_data.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 </script>
 {% endblock %}
