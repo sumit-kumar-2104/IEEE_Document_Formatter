@@ -15,7 +15,7 @@ from utils.title_suggested import suggest_titles
 from utils.llm_formatter import generate_ieee_markdown
 from utils.latex_formatter import generate_pdf_from_data
 from werkzeug.utils import secure_filename
-
+from PIL import Image
 
 # ===========================================
 # 🔗 MongoDB setup
@@ -84,8 +84,6 @@ def logout():
     return redirect(url_for('login_page'))
 
 
-
-
 # ========================
 # 🌐 Page Routes
 # ========================
@@ -112,28 +110,22 @@ def dashboard():
 
     user = users_collection.find_one({"email": session["user"]})
     uploads = user.get("uploads", [])
-    # return render_template('dashboard.html', uploads=uploads)
-    username = session.get('username') or user.get('name')  # fallback from DB
+    username = session.get('username') or user.get('name')
 
     return render_template('dashboard.html', uploads=uploads, username=username)
-
-# @app.route('/index.html')
-# @login_required
-# def index():
-#     return render_template('index.html')
 
 @app.route('/index.html')
 def index():
     if 'user' not in session:
         return redirect(url_for('login_page'))
     
-    # Get username with multiple fallbacks
     username = session.get('username')
     if not username:
         user = users_collection.find_one({"email": session["user"]})
         username = user.get('name', 'User')
     
     return render_template('index.html', username=username)
+
 # ========================
 # 📤 File Upload + Parsing
 # ========================
@@ -157,8 +149,8 @@ def upload():
         if not parsed_data or "error" in parsed_data:
             return jsonify({"error": parsed_data.get("error", "Unknown error")}), 400
 
-        # 🎯 Title suggestion
-        titles = suggest_titles(parsed_data)
+        # 🎯 Title and Abstract suggestions
+        suggestions = suggest_titles(parsed_data)
         temp_id = str(uuid.uuid4())
 
         # 📁 Create static image folder for this document
@@ -197,14 +189,16 @@ def upload():
 
         # 🔐 Save session token
         session['temp_id'] = temp_id
+        session['suggestions'] = suggestions
+        session['original_filename'] = uploaded_file.filename
 
-        # 📚 Log upload in DB
+        # 📚 Log upload in DB (with original filename as title)
         email = session['user']
         uploads_entry = {
             "file_name": uploaded_file.filename,
             "temp_id": temp_id,
             "parsed_on": datetime.utcnow(),
-            "title": titles[0] if titles else "Untitled"
+            "title": os.path.splitext(uploaded_file.filename)[0]  # Use filename without extension
         }
 
         users_collection.update_one(
@@ -212,11 +206,83 @@ def upload():
             {"$push": {"uploads": uploads_entry}}
         )
 
-        return redirect(url_for("editor"))
+        return redirect(url_for("title_selection"))
 
     except Exception as e:
         print("UPLOAD ERROR:", str(e))
         return jsonify({"error": "Internal server error"}), 500
+
+# ========================
+# 📝 Title Selection Page
+# ========================
+@app.route('/title_selection')
+def title_selection():
+    if 'user' not in session:
+        return redirect(url_for('login_page'))
+
+    temp_id = session.get('temp_id')
+    suggestions = session.get('suggestions', {})
+    original_filename = session.get('original_filename', 'Unknown')
+    
+    if not temp_id:
+        return "Missing session data", 400
+
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if not os.path.exists(temp_path):
+        return "Parsed document not found", 400
+
+    with open(temp_path, "r", encoding="utf-8") as f:
+        parsed_data = json.load(f)
+
+    username = session.get('username')
+    if not username:
+        user = users_collection.find_one({"email": session["user"]})
+        username = user.get('name', 'User')
+
+    return render_template('title_selection.html', 
+                          parsed=parsed_data, 
+                          suggestions=suggestions,
+                          original_filename=original_filename,
+                          username=username)
+
+# ========================
+# 📝 Save Title Selection
+# ========================
+@app.route('/save_title_selection', methods=['POST'])
+def save_title_selection():
+    if 'user' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    selected_title = data.get('title')
+    selected_abstract = data.get('abstract')
+    
+    temp_id = session.get('temp_id')
+    if not temp_id:
+        return jsonify({"error": "Missing session data"}), 400
+
+    temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
+    if not os.path.exists(temp_path):
+        return jsonify({"error": "Parsed document not found"}), 400
+
+    # Update parsed data with selected title and abstract
+    with open(temp_path, "r", encoding="utf-8") as f:
+        parsed_data = json.load(f)
+
+    parsed_data["title"] = selected_title
+    parsed_data["abstract"] = selected_abstract
+
+    # Save back to temp file
+    with open(temp_path, "w", encoding="utf-8") as f:
+        json.dump(parsed_data, f, ensure_ascii=False, indent=2)
+
+    # Update in database
+    users_collection.update_one(
+        {"email": session["user"], "uploads.temp_id": temp_id},
+        {"$set": {"uploads.$.title": selected_title}}
+    )
+
+    return jsonify({"success": True, "redirect": "/editor"})
 
 # ========================
 # 📝 Editor View
@@ -237,8 +303,6 @@ def editor():
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
 
-    # return render_template('editor.html', parsed=parsed_data)
-        # Ensure username comes from session first, then fallback to DB if needed
     username = session.get('username')
     if not username:
         user = users_collection.find_one({"email": session["user"]})
@@ -246,10 +310,8 @@ def editor():
 
     return render_template("editor.html", 
                          parsed=parsed_data, 
-                        
                          from_dashboard=True, 
                          username=username)
-
 
 # ========================
 # 🔁 Resume Editing
@@ -273,8 +335,6 @@ def resume(temp_id):
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
 
-    # markdown = parsed_data.get("edited_markdown")
-    # return render_template("editor.html", parsed=parsed_data, saved_markdown=markdown, from_dashboard=True)
     username = session.get('username')
     if not username:
         user = users_collection.find_one({"email": session["user"]})
@@ -282,10 +342,8 @@ def resume(temp_id):
 
     return render_template("editor.html", 
                          parsed=parsed_data, 
-                        #  saved_markdown=markdown,
                          from_dashboard=True, 
                          username=username)
-
 
 # ========================
 # 📄 Markdown + PDF Gen
@@ -311,7 +369,6 @@ def generate_ieee():
         return jsonify({"markdown": markdown})
     except Exception as e:
         return jsonify({"error": f"Error generating IEEE markdown: {str(e)}"}), 500
-
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
@@ -361,8 +418,6 @@ def delete_upload(temp_id):
         os.remove(temp_path)
 
     return redirect(url_for("dashboard"))
-
-
 
 # ===========================================
 # 🚀 Run Server

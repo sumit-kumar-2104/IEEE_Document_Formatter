@@ -1,0 +1,342 @@
+{% extends "base_dashboard.html" %}
+{% block title %}Title & Abstract Selection{% endblock %}
+{% block body_style %}
+background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://source.unsplash.com/1600x900/?research,academic');
+{% endblock %}
+
+{% block content %}
+<div class="selection-container">
+  <div class="back-btn-container">
+    <a href="/dashboard" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <h1 style="color: #0d47a1;">Select Title & Abstract</h1>
+  <p class="subtitle">Choose or customize your document's title and abstract</p>
+
+  <div class="selection-form">
+    <div class="section-group">
+      <h2>Title Selection</h2>
+      <div class="options-grid">
+        <!-- Original Title -->
+        <div class="option-card">
+          <input type="radio" id="original_title" name="title_choice" value="original">
+          <label for="original_title">
+            <span class="option-label">Original Title</span>
+            <div class="option-content">{{ suggestions.original_title or "No original title found" }}</div>
+          </label>
+        </div>
+
+        <!-- Suggested Titles -->
+        {% for title in suggestions.suggested_titles %}
+        <div class="option-card">
+          <input type="radio" id="suggested_title_{{ loop.index }}" name="title_choice" value="suggested_{{ loop.index }}">
+          <label for="suggested_title_{{ loop.index }}">
+            <span class="option-label">AI Suggestion {{ loop.index }}</span>
+            <div class="option-content">{{ title }}</div>
+          </label>
+        </div>
+        {% endfor %}
+
+        <!-- Custom Title -->
+        <div class="option-card">
+          <input type="radio" id="custom_title" name="title_choice" value="custom">
+          <label for="custom_title">
+            <span class="option-label">Custom Title</span>
+            <textarea id="custom_title_input" placeholder="Enter your custom title..." class="custom-input" rows="2"></textarea>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <h2>Abstract Selection</h2>
+      <div class="options-grid">
+        <!-- Original Abstract -->
+        <div class="option-card">
+          <input type="radio" id="original_abstract" name="abstract_choice" value="original">
+          <label for="original_abstract">
+            <span class="option-label">Original Abstract</span>
+            <div class="option-content">{{ suggestions.original_abstract or "No original abstract found" }}</div>
+          </label>
+        </div>
+
+        <!-- Suggested Abstracts -->
+        {% for abstract in suggestions.suggested_abstracts %}
+        <div class="option-card">
+          <input type="radio" id="suggested_abstract_{{ loop.index }}" name="abstract_choice" value="suggested_{{ loop.index }}">
+          <label for="suggested_abstract_{{ loop.index }}">
+            <span class="option-label">AI Suggestion {{ loop.index }}</span>
+            <div class="option-content">{{ abstract }}</div>
+          </label>
+        </div>
+        {% endfor %}
+
+        <!-- Custom Abstract -->
+        <div class="option-card">
+          <input type="radio" id="custom_abstract" name="abstract_choice" value="custom">
+          <label for="custom_abstract">
+            <span class="option-label">Custom Abstract</span>
+            <textarea id="custom_abstract_input" placeholder="Enter your custom abstract..." class="custom-input" rows="4"></textarea>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" id="proceedBtn" class="btn-ieee-solid">Proceed to Editor</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.selection-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.back-btn-container {
+  margin-bottom: 2rem;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0d47a1;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: 2px solid #0d47a1;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #0d47a1;
+  color: white;
+  text-decoration: none;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.selection-form {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.section-group {
+  margin-bottom: 3rem;
+}
+
+.section-group h2 {
+  color: #0d47a1;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1rem;
+}
+
+.option-card {
+  position: relative;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.option-card:hover {
+  border-color: #0d47a1;
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.1);
+}
+
+.option-card input[type="radio"] {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  transform: scale(1.5);
+}
+
+.option-card input[type="radio"]:checked + label {
+  background: rgba(13, 71, 161, 0.05);
+}
+
+.option-card label {
+  display: block;
+  cursor: pointer;
+  padding-right: 2rem;
+}
+
+.option-label {
+  font-weight: 600;
+  color: #0d47a1;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.option-content {
+  color: #333;
+  line-height: 1.5;
+  min-height: 3rem;
+  font-size: 0.95rem;
+}
+
+.custom-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #0d47a1;
+  box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.1);
+}
+
+.form-actions {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.btn-ieee-solid {
+  background: #0d47a1;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+}
+
+.btn-ieee-solid:hover {
+  background: #0a3d91;
+}
+
+.btn-ieee-solid:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .selection-container {
+    padding: 1rem;
+  }
+}
+</style>
+
+<script>
+document.getElementById('proceedBtn').addEventListener('click', function() {
+  const titleChoice = document.querySelector('input[name="title_choice"]:checked');
+  const abstractChoice = document.querySelector('input[name="abstract_choice"]:checked');
+  
+  if (!titleChoice || !abstractChoice) {
+    alert('Please select both a title and abstract option.');
+    return;
+  }
+  
+  let selectedTitle = '';
+  let selectedAbstract = '';
+  
+  // Get selected title
+  if (titleChoice.value === 'original') {
+    selectedTitle = `{{ suggestions.original_title or "" }}`;
+  } else if (titleChoice.value === 'custom') {
+    selectedTitle = document.getElementById('custom_title_input').value.trim();
+    if (!selectedTitle) {
+      alert('Please enter a custom title.');
+      return;
+    }
+  } else {
+    const index = titleChoice.value.split('_')[1];
+    const suggestedTitles = {{ suggestions.suggested_titles | tojson }};
+    selectedTitle = suggestedTitles[index - 1];
+  }
+  
+  // Get selected abstract
+  if (abstractChoice.value === 'original') {
+    selectedAbstract = `{{ suggestions.original_abstract or "" }}`;
+  } else if (abstractChoice.value === 'custom') {
+    selectedAbstract = document.getElementById('custom_abstract_input').value.trim();
+    if (!selectedAbstract) {
+      alert('Please enter a custom abstract.');
+      return;
+    }
+  } else {
+    const index = abstractChoice.value.split('_')[1];
+    const suggestedAbstracts = {{ suggestions.suggested_abstracts | tojson }};
+    selectedAbstract = suggestedAbstracts[index - 1];
+  }
+  
+  // Send selections to backend
+  fetch('/save_title_selection', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      title: selectedTitle,
+      abstract: selectedAbstract
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = data.redirect;
+    } else {
+      alert('Error saving selection: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Network error occurred.');
+  });
+});
+
+// Enable custom input when radio is selected
+document.getElementById('custom_title').addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('custom_title_input').focus();
+  }
+});
+
+document.getElementById('custom_abstract').addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('custom_abstract_input').focus();
+  }
+});
+
+// Auto-select custom radio when typing in custom input
+document.getElementById('custom_title_input').addEventListener('input', function() {
+  document.getElementById('custom_title').checked = true;
+});
+
+document.getElementById('custom_abstract_input').addEventListener('input', function() {
+  document.getElementById('custom_abstract').checked = true;
+});
+</script>
+{% endblock %}
