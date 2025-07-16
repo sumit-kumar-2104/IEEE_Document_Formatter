@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="dashboard-container">
-  <h1>IEEE Document Formatter</h1>
+  <h1 style="color: #00629B;">IEEE Document Formatter</h1>
   
   <div class="upload-section">
     <a href="/index.html" class="btn-ieee-solid">
@@ -41,7 +41,7 @@
           Resume Editing
         </a>
         <form action="/delete_upload/{{ item.temp_id }}" method="post" style="display: inline;">
-          <button type="submit" class="btn-ieee-danger">
+          <button type="submit" class="btn-ieee-danger" style="background-color: #E53935;">
             Delete
           </button>
         </form>
@@ -141,7 +141,7 @@
   .btn-ieee-danger {
     background: #E53935;
     color: white;
-    padding: 10px 20px;
+    padding: 15px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
