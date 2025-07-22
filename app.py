@@ -3,8 +3,6 @@ import os
 import uuid
 import json
 import shutil
-import bcrypt
-from pymongo import MongoClient
 from datetime import datetime
 from dateutil import parser
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
@@ -17,12 +15,12 @@ from utils.latex_formatter import generate_pdf_from_data
 from werkzeug.utils import secure_filename
 from PIL import Image
 
-# ===========================================
-# 🔗 MongoDB setup
-# ===========================================
-client = MongoClient("mongodb://localhost:27017/")
-db = client['authdb']
-users_collection = db['users']
+
+# Import database functions
+from database import (
+    init_db, create_user, authenticate_user, get_user_by_email,
+    add_upload, get_user_uploads, update_upload_title, delete_upload
+)
 
 # ===========================================
 # 🔧 Flask setup
@@ -37,6 +35,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TEMP_FOLDER, exist_ok=True)
 
+# Initialize database
+init_db()
+
 # ===========================================
 # 🔐 Authentication routes
 # ===========================================
@@ -48,20 +49,12 @@ def signup():
     password = data.get('password')
     phone = data.get('phone')
 
-    if users_collection.find_one({'email': email}):
-        return jsonify({"success": False, "message": "User already exists"})
-
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    users_collection.insert_one({
-        "name": name,
-        "email": email,
-        "password": hashed_password,
-        "phone": phone,
-        "uploads": []
-    })
-
-    return jsonify({"success": True, "message": "Signup successful", "redirect": "/login.html"})
-
+    success, message = create_user(name, email, password, phone)
+    
+    if success:
+        return jsonify({"success": True, "message": message, "redirect": "/login.html"})
+    else:
+        return jsonify({"success": False, "message": message})
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -69,20 +62,19 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    user = users_collection.find_one({"email": email})
-    if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
+    success, user = authenticate_user(email, password)
+    
+    if success:
         session['user'] = user['email']
         session['username'] = user['name'] 
         return jsonify({'success': True, 'message': 'Login successful', 'redirect': '/dashboard'})
     else:
         return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
 
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
-
 
 # ========================
 # 🌐 Page Routes
@@ -108,9 +100,12 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('login_page'))
 
-    user = users_collection.find_one({"email": session["user"]})
-    uploads = user.get("uploads", [])
-    username = session.get('username') or user.get('name')
+    uploads = get_user_uploads(session["user"])
+    username = session.get('username')
+    
+    if not username:
+        user = get_user_by_email(session["user"])
+        username = user.get('name', 'User') if user else 'User'
 
     return render_template('dashboard.html', uploads=uploads, username=username)
 
@@ -121,8 +116,8 @@ def index():
     
     username = session.get('username')
     if not username:
-        user = users_collection.find_one({"email": session["user"]})
-        username = user.get('name', 'User')
+        user = get_user_by_email(session["user"])
+        username = user.get('name', 'User') if user else 'User'
     
     return render_template('index.html', username=username)
 
@@ -194,17 +189,9 @@ def upload():
 
         # 📚 Log upload in DB (with original filename as title)
         email = session['user']
-        uploads_entry = {
-            "file_name": uploaded_file.filename,
-            "temp_id": temp_id,
-            "parsed_on": datetime.utcnow(),
-            "title": os.path.splitext(uploaded_file.filename)[0]  # Use filename without extension
-        }
-
-        users_collection.update_one(
-            {"email": email},
-            {"$push": {"uploads": uploads_entry}}
-        )
+        title = os.path.splitext(uploaded_file.filename)[0]  # Use filename without extension
+        
+        add_upload(email, uploaded_file.filename, temp_id, title)
 
         return redirect(url_for("title_selection"))
 
@@ -236,8 +223,8 @@ def title_selection():
 
     username = session.get('username')
     if not username:
-        user = users_collection.find_one({"email": session["user"]})
-        username = user.get('name', 'User')
+        user = get_user_by_email(session["user"])
+        username = user.get('name', 'User') if user else 'User'
 
     return render_template('title_selection.html', 
                           parsed=parsed_data, 
@@ -277,10 +264,7 @@ def save_title_selection():
         json.dump(parsed_data, f, ensure_ascii=False, indent=2)
 
     # Update in database
-    users_collection.update_one(
-        {"email": session["user"], "uploads.temp_id": temp_id},
-        {"$set": {"uploads.$.title": selected_title}}
-    )
+    update_upload_title(session["user"], temp_id, selected_title)
 
     return jsonify({"success": True, "redirect": "/editor"})
 
@@ -305,8 +289,8 @@ def editor():
 
     username = session.get('username')
     if not username:
-        user = users_collection.find_one({"email": session["user"]})
-        username = user.get('name', 'User')
+        user = get_user_by_email(session["user"])
+        username = user.get('name', 'User') if user else 'User'
 
     return render_template("editor.html", 
                          parsed=parsed_data, 
@@ -323,12 +307,8 @@ def resume(temp_id):
 
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
     if not os.path.exists(temp_path):
-        users_collection.update_one(
-            {"email": session["user"]},
-            {"$pull": {"uploads": {"temp_id": temp_id}}}
-        )
-        user = users_collection.find_one({"email": session["user"]})
-        uploads = user.get("uploads", [])
+        delete_upload(session["user"], temp_id)
+        uploads = get_user_uploads(session["user"])
         return render_template("dashboard.html", uploads=uploads, error="Parsed file not found. Please upload again.")
 
     session['temp_id'] = temp_id
@@ -337,8 +317,8 @@ def resume(temp_id):
 
     username = session.get('username')
     if not username:
-        user = users_collection.find_one({"email": session["user"]})
-        username = user.get('name', 'User')
+        user = get_user_by_email(session["user"])
+        username = user.get('name', 'User') if user else 'User'
 
     return render_template("editor.html", 
                          parsed=parsed_data, 
@@ -400,17 +380,14 @@ def generate_pdf():
 # 🗑 Delete Upload
 # ========================
 @app.route('/delete_upload/<temp_id>', methods=['GET', 'POST'])
-def delete_upload(temp_id):
+def delete_upload_route(temp_id):
     if 'user' not in session:
         return redirect(url_for('login_page'))
 
     email = session['user']
 
-    # Remove from MongoDB
-    users_collection.update_one(
-        {"email": email},
-        {"$pull": {"uploads": {"temp_id": temp_id}}}
-    )
+    # Remove from SQLite
+    delete_upload(email, temp_id)
 
     # Remove temp file
     temp_path = os.path.join(TEMP_FOLDER, f"{temp_id}.json")
@@ -418,7 +395,6 @@ def delete_upload(temp_id):
         os.remove(temp_path)
 
     return redirect(url_for("dashboard"))
-
 
 @app.route('/save_document', methods=['POST'])
 def save_document():
@@ -439,7 +415,6 @@ def save_document():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 # ===========================================
 # 🚀 Run Server
