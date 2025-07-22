@@ -7,7 +7,8 @@ import base64
 import uuid
 import unicodedata
 
-IEEE_TEMPLATE = r"""
+# IEEE Conference Template
+IEEE_CONFERENCE_TEMPLATE = r"""
 \documentclass[conference]{IEEEtran}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -20,9 +21,19 @@ IEEE_TEMPLATE = r"""
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage[export]{adjustbox}
+\usepackage{cite}
 
 \title{<< title >>}
-\author{}
+\author{
+{% if authors %}
+{% for author in authors %}
+\IEEEauthorblockN{<< author.name >>}
+\IEEEauthorblockA{<< author.affiliation >>\\
+<< author.email >>}
+{% if not loop.last %}\and{% endif %}
+{% endfor %}
+{% endif %}
+}
 
 \begin{document}
 \maketitle
@@ -59,6 +70,239 @@ IEEE_TEMPLATE = r"""
 
 \end{document}
 """
+
+# IEEE Journal Template
+IEEE_JOURNAL_TEMPLATE = r"""
+\documentclass[journal]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage[export]{adjustbox}
+\usepackage{cite}
+\usepackage{balance}
+
+\title{<< title >>}
+\author{
+{% if authors %}
+{% for author in authors %}
+<< author.name >>{% if author.membership %}, \IEEEmembership{<< author.membership >>}{% endif %}
+{% if author.affiliation %}
+\thanks{<< author.name >> is with << author.affiliation >>. E-mail: << author.email >>}
+{% endif %}
+{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% endif %}
+}
+
+\markboth{Journal Name, Vol. XX, No. XX, Month Year}
+{Author \MakeLowercase{\textit{et al.}}: Paper Title}
+
+\begin{document}
+\maketitle
+
+{% if abstract %}
+\begin{abstract}
+<< abstract >>
+\end{abstract}
+{% endif %}
+
+{% if keywords %}
+\begin{IEEEkeywords}
+<< keywords >>
+\end{IEEEkeywords}
+{% endif %}
+
+\IEEEpeerreviewmaketitle
+
+{% for section in sections %}
+\section{<< section.heading >>}
+<< section.content >>
+
+{% for sub in section.subsections %}
+\subsection{<< sub.heading >>}
+<< sub.content >>
+{% endfor %}
+{% endfor %}
+
+{% if references %}
+\begin{thebibliography}{99}
+{% for ref in references %}
+\bibitem{ref<< loop.index >>} << ref >>
+{% endfor %}
+\end{thebibliography}
+{% endif %}
+
+\balance
+\end{document}
+"""
+
+IEEE_TRANSACTIONS_TEMPLATE = r"""
+\documentclass[journal]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage[export]{adjustbox}
+\usepackage{cite}
+\usepackage{color}
+
+\title{<< title >>}
+\author{
+{% if authors %}
+{% for author in authors %}
+<< author.name >>{% if author.membership %}, \IEEEmembership{<< author.membership >>}{% endif %}
+{% if author.affiliation %}
+\thanks{Manuscript received Month Date, Year; revised Month Date, Year. << author.name >> is with << author.affiliation >> (e-mail: << author.email >>).}
+{% endif %}
+{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% endif %}
+}
+
+\markboth{IEEE Transactions on Subject, Vol. XX, No. XX, Month Year}
+{Author \MakeLowercase{\textit{et al.}}: Paper Title}
+
+\begin{document}
+\maketitle
+
+{% if abstract %}
+\begin{abstract}
+<< abstract >>
+\end{abstract}
+{% endif %}
+
+{% if keywords %}
+\begin{IEEEkeywords}
+<< keywords >>
+\end{IEEEkeywords}
+{% endif %}
+
+\IEEEpeerreviewmaketitle
+
+{% for section in sections %}
+{% if loop.first %}
+\section{<< section.heading >>}
+\IEEEPARstart{T}{his} is where the actual content begins with a proper drop cap. << section.content >>
+{% else %}
+\section{<< section.heading >>}
+<< section.content >>
+{% endif %}
+
+{% for sub in section.subsections %}
+\subsection{<< sub.heading >>}
+<< sub.content >>
+{% endfor %}
+{% endfor %}
+
+\section*{Acknowledgment}
+The authors would like to thank the anonymous reviewers for their valuable comments and suggestions.
+
+{% if references %}
+\begin{thebibliography}{99}
+{% for ref in references %}
+\bibitem{ref<< loop.index >>} << ref >>
+{% endfor %}
+\end{thebibliography}
+{% endif %}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo}}]{Author Name}
+Biography text here. The author received the B.S. degree from University in Year, and the Ph.D. degree from University in Year. His research interests include...
+\end{IEEEbiography}
+
+\end{document}
+"""
+
+
+
+
+# IEEE Letters Template
+IEEE_LETTERS_TEMPLATE = r"""
+\documentclass[journal,compsoc]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage[export]{adjustbox}
+\usepackage{cite}
+
+\title{<< title >>}
+\author{
+{% if authors %}
+{% for author in authors %}
+<< author.name >>{% if author.membership %}, \IEEEmembership{<< author.membership >>}{% endif %}
+{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% endif %}
+}
+
+\markboth{IEEE Letters Subject, Vol. XX, No. XX, Month Year}{}
+
+\begin{document}
+\maketitle
+
+{% if abstract %}
+\begin{abstract}
+<< abstract >>
+\end{abstract}
+{% endif %}
+
+{% if keywords %}
+\begin{IEEEkeywords}
+<< keywords >>
+\end{IEEEkeywords}
+{% endif %}
+
+{% for section in sections %}
+{% if loop.first %}
+\IEEEPARstart{<< section.content[0] >>}{<< section.content[1:10] >>}<< section.content[10:] >>
+{% else %}
+\section{<< section.heading >>}
+<< section.content >>
+{% endif %}
+
+{% for sub in section.subsections %}
+\subsection{<< sub.heading >>}
+<< sub.content >>
+{% endfor %}
+{% endfor %}
+
+{% if references %}
+\begin{thebibliography}{99}
+{% for ref in references %}
+\bibitem{ref<< loop.index >>} << ref >>
+{% endfor %}
+\end{thebibliography}
+{% endif %}
+
+\end{document}
+"""
+
+# Template dictionary
+TEMPLATES = {
+    'conference': IEEE_CONFERENCE_TEMPLATE,
+    'journal': IEEE_JOURNAL_TEMPLATE,
+    'transactions': IEEE_TRANSACTIONS_TEMPLATE,
+    'letter': IEEE_LETTERS_TEMPLATE
+}
 
 def unicode_to_latex(text):
     """Convert common Unicode characters to LaTeX equivalents"""
@@ -245,7 +489,7 @@ def render_images(content, temp_image_dir, images_data=None):
     def replace_image(match):
         img_path = match.group(1).strip()
         
-        print(f"[DEBUG] Processing image path: {img_path[:50]}...")
+        print(f"[DEBUG] Processing image path: {img_path[:100]}...")
         
         # Handle base64 data URLs (uploaded images)
         if img_path.startswith('data:image/'):
@@ -254,7 +498,7 @@ def render_images(content, temp_image_dir, images_data=None):
                 
                 # Extract the image format and base64 data
                 header, encoded = img_path.split(',', 1)
-                image_format = header.split('/')[1].split(';')[0]  # jpeg, png, etc.
+                image_format = header.split('/')[1].split(';')[0]
                 
                 # Decode base64 data to binary
                 image_data = base64.b64decode(encoded)
@@ -267,18 +511,16 @@ def render_images(content, temp_image_dir, images_data=None):
                 
                 # Convert and save as PNG
                 if image_format.lower() in ['jpeg', 'jpg']:
-                    # For JPEG, convert to RGB first
                     img = Image.open(io.BytesIO(image_data))
                     img = img.convert('RGB')
                     img.save(full_dest, 'PNG')
                 else:
-                    # For PNG and other formats, save directly
                     with open(full_dest, 'wb') as f:
                         f.write(image_data)
                 
-                print(f"[DEBUG] Image saved successfully: {os.path.exists(full_dest)}")
+                print(f"[DEBUG] Image saved: {os.path.exists(full_dest)}, Size: {os.path.getsize(full_dest) if os.path.exists(full_dest) else 0} bytes")
                 
-                # Find image metadata for styling
+                # Get image metadata
                 img_size = 'medium'
                 img_caption = "Uploaded Image"
                 
@@ -289,85 +531,85 @@ def render_images(content, temp_image_dir, images_data=None):
                             img_caption = latex_escape(img_data.get('caption', img_caption))
                             break
                 
-                # Determine alignment and width based on size
-                if img_size == 'small':
-                    alignment = r"\raggedright"
-                    width = "0.3\\textwidth"
-                elif img_size == 'large':
-                    alignment = r"\raggedleft"
-                    width = "0.8\\textwidth"
-                else:  # medium
-                    alignment = r"\centering"
-                    width = "0.5\\textwidth"
-                
                 # Generate LaTeX code
+                alignment = r"\centering"
+                width = {"small": "0.3", "medium": "0.5", "large": "0.8"}[img_size]
+                
                 latex_code = (
                     r"\begin{figure}[H]" + "\n"
                     f"{alignment}" + "\n"
-                    f"\\includegraphics[width={width}]{{{filename}}}" + "\n"
+                    f"\\includegraphics[width={width}\\textwidth]{{{filename}}}" + "\n"
                     f"\\caption{{{img_caption}}}" + "\n"
                     r"\end{figure}" + "\n"
                 )
                 
-                print(f"[DEBUG] Generated LaTeX code: {latex_code}")
+                print(f"[DEBUG] Generated LaTeX for base64 image: \\includegraphics[width={width}\\textwidth]{{{filename}}}")
                 return latex_code
                 
             except Exception as e:
                 print(f"[ERROR] Failed to process base64 image: {e}")
                 return r"\textbf{[Base64 image processing failed]}"
         
-        # Handle file path images (existing logic)
-        elif img_path.startswith('/static/'):
-            full_src = img_path.lstrip('/')
+        # Handle file path images
         else:
-            full_src = img_path.lstrip("/\\")
-        
-        filename = os.path.basename(img_path)
-        full_dest = os.path.join(temp_image_dir, filename)
+            if img_path.startswith('/static/'):
+                full_src = img_path.lstrip('/')
+            else:
+                full_src = img_path.lstrip("/\\")
+            
+            filename = os.path.basename(img_path)
+            full_dest = os.path.join(temp_image_dir, filename)
+            
+            print(f"[DEBUG] Processing file image: {full_src} -> {full_dest}")
 
-        # Find image metadata for alignment and size
-        img_size = 'medium'
-        img_caption = f"Image: {latex_escape(filename)}"
-        
-        if images_data:
-            for img_data in images_data:
-                if img_data.get('path') == img_path or img_data.get('filename') == filename:
-                    img_size = img_data.get('size', 'medium')
-                    img_caption = latex_escape(img_data.get('caption', img_caption))
-                    break
+            # Get image metadata
+            img_size = 'medium'
+            img_caption = f"Image: {latex_escape(filename)}"
+            
+            if images_data:
+                for img_data in images_data:
+                    if img_data.get('path') == img_path or img_data.get('filename') == filename:
+                        img_size = img_data.get('size', 'medium')
+                        img_caption = latex_escape(img_data.get('caption', img_caption))
+                        break
 
-        if os.path.exists(full_src):
-            try:
-                if is_valid_png(full_src):
-                    shutil.copy(full_src, full_dest)
-                else:
-                    if not convert_to_png(full_src, full_dest):
-                        return r"\textbf{[Image conversion failed]}"
-                
-                # Determine alignment and width based on size
-                if img_size == 'small':
-                    alignment = r"\raggedright"
-                    width = "0.3\\textwidth"
-                elif img_size == 'large':
-                    alignment = r"\raggedleft"
-                    width = "0.8\\textwidth"
-                else:  # medium
+            if os.path.exists(full_src):
+                try:
+                    if is_valid_png(full_src):
+                        shutil.copy(full_src, full_dest)
+                    else:
+                        if not convert_to_png(full_src, full_dest):
+                            return r"\textbf{[Image conversion failed]}"
+                    
+                    print(f"[DEBUG] File image copied: {os.path.exists(full_dest)}")
+                    
+                    # Generate LaTeX code
                     alignment = r"\centering"
-                    width = "0.5\\textwidth"
-                
-                return (
-                    r"\begin{figure}[H]" + "\n"
-                    f"{alignment}" + "\n"
-                    f"\\includegraphics[width={width}]{{{filename}}}" + "\n"
-                    f"\\caption{{{img_caption}}}" + "\n"
-                    r"\end{figure}" + "\n"
-                )
-            except Exception as e:
-                return r"\textbf{[Image processing failed]}"
-        else:
-            return r"\textbf{[Image not found]}"
+                    width = {"small": "0.3", "medium": "0.5", "large": "0.8"}[img_size]
+                    
+                    latex_code = (
+                        r"\begin{figure}[H]" + "\n"
+                        f"{alignment}" + "\n"
+                        f"\\includegraphics[width={width}\\textwidth]{{{filename}}}" + "\n"
+                        f"\\caption{{{img_caption}}}" + "\n"
+                        r"\end{figure}" + "\n"
+                    )
+                    
+                    print(f"[DEBUG] Generated LaTeX for file image: \\includegraphics[width={width}\\textwidth]{{{filename}}}")
+                    return latex_code
+                    
+                except Exception as e:
+                    print(f"[ERROR] Failed to process file image: {e}")
+                    return r"\textbf{[Image processing failed]}"
+            else:
+                print(f"[ERROR] Image file not found: {full_src}")
+                return r"\textbf{[Image not found]}"
     
-    return image_pattern.sub(replace_image, content)
+    # Apply the replacement
+    result = image_pattern.sub(replace_image, content)
+    print(f"[DEBUG] Image replacement complete. Original length: {len(content)}, New length: {len(result)}")
+    return result
+
 
 def render_tables(content, table_data):
     def replace_table(match):
@@ -431,7 +673,44 @@ def safe_latex_escape(text, table_data):
     
     return ''.join(parts)
 
-def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
+def parse_authors_from_text(authors_list):
+    """Parse author information from text"""
+    if not authors_list:
+        return []
+    
+    authors = []
+    for author_text in authors_list:
+        # Basic parsing - you can make this more sophisticated
+        author_info = {
+            'name': author_text.split('@')[0].strip() if '@' in author_text else author_text.strip(),
+            'email': author_text.split('@')[1].split()[0] + '@' + author_text.split('@')[1].split()[1] if '@' in author_text else '',
+            'affiliation': 'University/Institution',  # Default
+            'membership': 'Student Member'  # Default
+        }
+        authors.append(author_info)
+    
+    return authors
+
+
+# Add this function before generate_pdf_from_data in latex_formatter.py
+def clean_content_for_parstart(content):
+    """Extract clean text content for IEEEPARstart, avoiding LaTeX commands"""
+    if not content or not isinstance(content, str):
+        return content
+    
+    # Remove figure environments and their content
+    import re
+    clean_text = re.sub(r'\\begin\{figure\}.*?\\end\{figure\}', '', content, flags=re.DOTALL)
+    clean_text = re.sub(r'\\includegraphics.*?\n', '', clean_text)
+    clean_text = re.sub(r'\\caption\{.*?\}', '', clean_text)
+    clean_text = re.sub(r'\\centering\s*', '', clean_text)
+    clean_text = clean_text.strip()
+    
+    return clean_text
+
+
+
+def generate_pdf_from_data(parsed_data, template_type='conference', output_path="static/temp.pdf"):
     try:
         from pathlib import Path
         import tempfile
@@ -441,17 +720,40 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
         data = copy.deepcopy(parsed_data)
         table_data = data.get("table_data", {})
 
+        # Get the selected template
+        if template_type == 'journal':
+            template_code = IEEE_JOURNAL_TEMPLATE
+        elif template_type == 'transactions': 
+            template_code = IEEE_TRANSACTIONS_TEMPLATE
+        elif template_type == 'letter':
+            template_code = IEEE_LETTERS_TEMPLATE
+        else:
+            template_code = IEEE_CONFERENCE_TEMPLATE  # default
+        
+        print(f"[DEBUG] Using template: {template_type}")
+        print(f"[DEBUG] Processing {len(data.get('sections', []))} sections")
+
         # Enhanced escaping for basic fields
         data["title"] = safe_latex_escape(data.get("title", "Untitled Document"), {})
         data["abstract"] = safe_latex_escape(data.get("abstract", ""), {})
         data["keywords"] = safe_latex_escape(data.get("keywords", ""), {})
+        
+        # Parse authors
+        authors_text = data.get("authors", [])
+        if isinstance(authors_text, list) and len(authors_text) > 0 and isinstance(authors_text[0], str):
+            # Convert old string format to new dict format
+            data["authors"] = parse_authors_from_text(authors_text)
+        elif not isinstance(data.get("authors", []), list) or len(data.get("authors", [])) == 0:
+            data["authors"] = []
 
         with tempfile.TemporaryDirectory() as tmpdir:
             print(f"[INFO] Working in temp directory: {tmpdir}")
+            print(f"[INFO] Using template: {template_type}")
             
-            # Process sections with inline table and image rendering
-            for section in data.get("sections", []):
-                print(f"[DEBUG] Processing section: {section.get('heading', 'Unknown')}")
+            # Process sections with enhanced image handling
+            for section_idx, section in enumerate(data.get("sections", [])):
+                section_heading = section.get('heading', f'Section {section_idx + 1}')
+                print(f"[DEBUG] Processing section: {section_heading}")
                 
                 section["heading"] = safe_latex_escape(section.get("heading", ""), {})
                 raw_content = section.get("content", "")
@@ -459,23 +761,45 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                 # Get images data for this section
                 section_images = section.get("images", [])
                 if section_images:
-                    print(f"[DEBUG] Section has {len(section_images)} images")
+                    print(f"[DEBUG] Section '{section_heading}' has {len(section_images)} images")
                     for i, img in enumerate(section_images):
                         img_path = img.get('path', '')
-                        print(f"[DEBUG] Image {i}: {img_path[:50]}...")
+                        img_caption = img.get('caption', f'Figure {i+1}')
+                        print(f"[DEBUG] Image {i}: {img_path[:100]}...")
+                        print(f"[DEBUG] Image caption: {img_caption}")
                         
-                        # Add image placeholders to content
+                        # Create explicit image placeholder
                         image_placeholder = f"[IMAGE: {img_path}]"
-                        raw_content += f"\n\n{image_placeholder}\n\n"
-                        print(f"[DEBUG] Added placeholder: {image_placeholder}")
+                        
+                        # Add image placeholder to content if not already present
+                        if image_placeholder not in raw_content:
+                            raw_content += f"\n\n{image_placeholder}\n\n"
+                            print(f"[DEBUG] Added placeholder: {image_placeholder}")
+                        else:
+                            print(f"[DEBUG] Placeholder already exists in content")
+
+                # Then in generate_pdf_from_data, add this before template rendering:
+                if template_type == 'transactions' and data.get("sections"):
+                    first_section = data["sections"][0]
+                    if first_section.get("content"):
+                        clean_first_content = clean_content_for_parstart(first_section["content"])
+                        first_section["clean_content"] = clean_first_content
+
                 
-                # Now render images (including the base64 ones we just added)
+                # Process inline content first
+                print(f"[DEBUG] Raw content length: {len(raw_content)} characters")
+                
+                # Render images first
                 rendered_content = render_images(raw_content, tmpdir, section_images)
-                # Then render tables inline
+                print(f"[DEBUG] After image rendering: {len(rendered_content)} characters")
+                
+                # Then render tables
                 rendered_content = render_tables(rendered_content, table_data)
+                print(f"[DEBUG] After table rendering: {len(rendered_content)} characters")
                 
                 # Finally, safely escape (preserving LaTeX commands)
                 section["content"] = safe_latex_escape(rendered_content, table_data)
+                print(f"[DEBUG] Final content length: {len(section['content'])} characters")
                 
                 # Process subsections
                 for sub in section.get("subsections", []):
@@ -495,17 +819,28 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                 variable_end_string='>>',
                 autoescape=False
             )
-            template = env.from_string(IEEE_TEMPLATE)
+            # template = env.from_string(template_code)
+
+
+
+
+
+            template = env.from_string(template_code)
+
             tex_code = template.render(**data)
 
-            # Save .tex file
+            # Save .tex file for debugging
             tex_path = Path(tmpdir) / "paper.tex"
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(tex_code)
             
             print(f"[INFO] LaTeX file written to: {tex_path}")
+            
+            # Debug: Check if images are in tex code
+            image_count = tex_code.count('\\includegraphics')
+            print(f"[DEBUG] Found {image_count} \\includegraphics commands in LaTeX")
 
-            # Run pdflatex three times for proper references and Unicode handling
+            # Run pdflatex
             for run_num in [1, 2, 3]:
                 print(f"[INFO] Running pdflatex (pass {run_num})")
                 result = subprocess.run(
@@ -544,5 +879,7 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
     except FileNotFoundError as e:
         return {"error": f"Missing executable: {e.filename}. Please install LaTeX (texlive-full or similar)"}
     except Exception as e:
-        print(f"[ERROR] Subprocess failed: {e}")
+        print(f"[ERROR] PDF generation failed: {e}")
+        import traceback
+        traceback.print_exc()
         return {"error": f"Unexpected error: {str(e)}"}

@@ -130,8 +130,13 @@ def upload():
         return redirect(url_for('login_page'))
 
     uploaded_file = request.files.get('file')
+    template_type = request.form.get('template', 'conference')  # Get selected template
+    
     if not uploaded_file:
         return jsonify({"error": "No file uploaded"}), 400
+
+    # Store template type in session
+    session['template_type'] = template_type
 
     # 🧾 Save uploaded file temporarily
     filename = secure_filename(uploaded_file.filename)
@@ -286,6 +291,10 @@ def editor():
 
     with open(temp_path, "r", encoding="utf-8") as f:
         parsed_data = json.load(f)
+    
+    # Ensure template type is set
+    if 'template_type' not in parsed_data:
+        parsed_data['template_type'] = session.get('template_type', 'conference')
 
     username = session.get('username')
     if not username:
@@ -296,6 +305,7 @@ def editor():
                          parsed=parsed_data, 
                          from_dashboard=True, 
                          username=username)
+
 
 # ========================
 # 🔁 Resume Editing
@@ -359,6 +369,23 @@ def generate_pdf():
     if not data:
         return jsonify({"error": "No data received"}), 400
 
+    # Get template type from data or session (with fallback)
+    template_type = data.get('template_type', session.get('template_type', 'conference'))
+    
+    # Debug logging
+    print(f"[DEBUG] PDF generation request:")
+    print(f"  - Template type: {template_type}")
+    print(f"  - Sections: {len(data.get('sections', []))}")
+    
+    # Count total images
+    total_images = 0
+    for section in data.get('sections', []):
+        section_images = len(section.get('images', []))
+        total_images += section_images
+        if section_images > 0:
+            print(f"  - Section '{section.get('heading', 'Unknown')}': {section_images} images")
+    print(f"  - Total images: {total_images}")
+
     # Save the latest edited version to temp file
     temp_id = session.get("temp_id")
     if temp_id:
@@ -369,12 +396,17 @@ def generate_pdf():
         except Exception as e:
             return jsonify({"error": f"Failed to save temp data: {str(e)}"}), 500
 
-    # Generate the PDF
+    # Generate the PDF with selected template
     try:
-        result = generate_pdf_from_data(data)
+        result = generate_pdf_from_data(data, template_type)
         return jsonify(result)
     except Exception as e:
+        print(f"[ERROR] PDF generation exception: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
+
+
 
 # ========================
 # 🗑 Delete Upload

@@ -23,6 +23,21 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
   <button onclick="saveDocument()" class="control-btn warning">💾 Save Document</button>
 </div>
 
+<!-- Template Selection Bar -->
+<div id="templateBar" style="margin-bottom: 1em; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 8px; border: 2px solid #757575;">
+  <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+    <label style="color: white; font-weight: bold; font-size: 14px;">IEEE Template:</label>
+    <select id="templateSelector" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; background: white; font-size: 14px; min-width: 150px;">
+      <option value="conference">Conference Paper</option>
+      <option value="journal">Journal Article</option>
+      <option value="transactions">Transactions</option>
+      <option value="letter">Letters</option>
+    </select>
+    <span style="color: #ccc; font-size: 12px;">Changes will apply on next PDF generation</span>
+  </div>
+</div>
+
+
 <div id="editorContainer" style="display: flex; gap: 1em; height: 85vh;">
   <!-- 📝 Enhanced Editable Structured Content (Left Panel) -->
   <div id="structuredEditor" class="panel editor-panel" style="flex: 1; border: 4px solid #757575; overflow-y: auto; max-height: 85vh; padding: 20px; background: rgba(255,255,255,0.95);">
@@ -437,6 +452,40 @@ function setupModalEventListeners() {
   }
 }
 
+// Add this right after setupModalEventListeners() in DOMContentLoaded
+function setupTemplateSelector() {
+  const templateSelector = document.getElementById('templateSelector');
+  
+  // Set current template from session or default
+  const currentTemplate = parsedData.template_type || 'conference';
+  templateSelector.value = currentTemplate;
+  
+  // Handle template changes
+  templateSelector.addEventListener('change', function(e) {
+    const newTemplate = e.target.value;
+    parsedData.template_type = newTemplate;
+    
+    console.log('[INFO] Template changed to:', newTemplate);
+    
+    // Show loading indicator
+    const iframe = document.getElementById('pdfFrame');
+    iframe.srcdoc = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; font-family: Arial; color: #666;"><div style="text-align: center;"><div style="font-size: 18px; margin-bottom: 10px;">🔄 Regenerating PDF...</div><div style="font-size: 14px;">Applying ' + newTemplate + ' template</div></div></div>';
+    
+    // Regenerate PDF with new template
+    setTimeout(() => {
+      regenerateMarkdown();
+    }, 500);
+  });
+}
+
+// Call this function in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+  setupModalEventListeners();
+  setupTemplateSelector(); // Add this line
+  renderEditableStructure();
+  regenerateMarkdown();
+});
+
 
 
 function closeImageModal() {
@@ -828,6 +877,13 @@ function captureEditedData() {
   const keywordsEl = document.querySelector('[data-key="keywords"]');
   if (keywordsEl) parsedData.keywords = keywordsEl.innerText.trim();
 
+  const templateSelector = document.getElementById('templateSelector');
+  if (templateSelector) {
+    parsedData.template_type = templateSelector.value;
+  } else if (!parsedData.template_type) {
+    parsedData.template_type = 'conference'; // fallback
+  }
+
   // Capture sections
   document.querySelectorAll('[data-sec]').forEach(el => {
     const sec = parseInt(el.dataset.sec);
@@ -835,7 +891,7 @@ function captureEditedData() {
     const sub = el.dataset.sub;
     const text = el.innerText.trim();
 
-    if (!parsedData.sections[sec]) parsedData.sections[sec] = { heading: '', content: '', subsections: [] };
+    if (!parsedData.sections[sec]) parsedData.sections[sec] = { heading: '', content: '', subsections: [], images: [] };
 
     if (subsec !== null) {
       if (!parsedData.sections[sec].subsections[subsec]) {
@@ -887,22 +943,68 @@ function captureEditedData() {
       if (rowData.length > 0) tableData.push(rowData);
     });
     
-    if (!parsedData.tables) parsedData.tables = [];
-    parsedData.tables[tableId] = tableData;
+    if (!parsedData.table_data) parsedData.table_data = {};
+    parsedData.table_data[tableId] = tableData;
   });
+  
+  // Ensure images are properly structured for each section
+  if (parsedData.sections) {
+    parsedData.sections.forEach((section, sectionIndex) => {
+      if (!section.images) {
+        section.images = [];
+      }
+      
+      // Debug log for images
+      if (section.images.length > 0) {
+        console.log(`[DEBUG] Section ${sectionIndex} has ${section.images.length} images:`, 
+                   section.images.map(img => ({ path: img.path?.substring(0, 50), caption: img.caption, size: img.size })));
+      }
+    });
+  }
+  
 }
 
-// Section management functions
-function addNewSection() {
-  if (!parsedData.sections) parsedData.sections = [];
-  parsedData.sections.push({
-    heading: 'New Section',
-    content: '',
-    subsections: [],
-    images: []
-  });
-  renderEditableStructure();
+async function regenerateMarkdown() {
+  try {
+    // Capture all current edits first
+    captureEditedData();
+    
+    console.log('[DEBUG] Sending data to generate_pdf:', {
+      title: parsedData.title,
+      sections: parsedData.sections?.length || 0,
+      totalImages: parsedData.sections?.reduce((total, section) => total + (section.images?.length || 0), 0) || 0,
+      template: parsedData.template_type
+    });
+    
+    const res = await fetch('/generate_pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsedData)
+    });
+
+    const result = await res.json();
+    const iframe = document.getElementById('pdfFrame');
+    
+    if (result.success) {
+      iframe.src = `/static/temp.pdf?${Date.now()}#toolbar=0&view=FitH`;
+    } else {
+      console.error('[ERROR] PDF Generation failed:', result);
+      iframe.srcdoc = `<div style="color:red; padding: 20px; font-family: monospace;">
+        <h3>PDF Generation Error:</h3>
+        <pre>${result.error || 'Unknown error occurred'}</pre>
+        ${result.tex_code ? `<details><summary>LaTeX Code</summary><pre>${result.tex_code}</pre></details>` : ''}
+      </div>`;
+    }
+  } catch (error) {
+    console.error('Error regenerating PDF:', error);
+    const iframe = document.getElementById('pdfFrame');
+    iframe.srcdoc = `<div style="color:red; padding: 20px;">
+      <h3>Network Error:</h3>
+      <p>Failed to connect to server: ${error.message}</p>
+    </div>`;
+  }
 }
+
 
 function deleteSection(index) {
   if (confirm('Are you sure you want to delete this section?')) {
