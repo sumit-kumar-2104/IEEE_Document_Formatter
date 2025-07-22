@@ -5,12 +5,17 @@ import shutil
 from PIL import Image
 import base64
 import uuid
+import unicodedata
 
 IEEE_TEMPLATE = r"""
 \documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{caption}
 \usepackage{hyperref}
 \usepackage{booktabs}
@@ -55,16 +60,159 @@ IEEE_TEMPLATE = r"""
 \end{document}
 """
 
-def latex_escape(text):
+def unicode_to_latex(text):
+    """Convert common Unicode characters to LaTeX equivalents"""
     if not isinstance(text, str):
         return str(text) if text is not None else ""
-    replacements = {
-        '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#',
-        '_': r'\_', '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}',
-        '^': r'\textasciicircum{}', '\\': r'\textbackslash{}'
+    
+    # Common mathematical symbols
+    unicode_replacements = {
+        '∈': r'$\in$',
+        '∉': r'$\notin$',
+        '∀': r'$\forall$',
+        '∃': r'$\exists$',
+        '∞': r'$\infty$',
+        '≤': r'$\leq$',
+        '≥': r'$\geq$',
+        '≠': r'$\neq$',
+        '≈': r'$\approx$',
+        '±': r'$\pm$',
+        '×': r'$\times$',
+        '÷': r'$\div$',
+        '→': r'$\rightarrow$',
+        '←': r'$\leftarrow$',
+        '↔': r'$\leftrightarrow$',
+        '⊂': r'$\subset$',
+        '⊃': r'$\supset$',
+        '⊆': r'$\subseteq$',
+        '⊇': r'$\supseteq$',
+        '∩': r'$\cap$',
+        '∪': r'$\cup$',
+        '∅': r'$\emptyset$',
+        '∑': r'$\sum$',
+        '∏': r'$\prod$',
+        '∫': r'$\int$',
+        '√': r'$\sqrt{}$',
+        'α': r'$\alpha$',
+        'β': r'$\beta$',
+        'γ': r'$\gamma$',
+        'δ': r'$\delta$',
+        'ε': r'$\varepsilon$',
+        'θ': r'$\theta$',
+        'λ': r'$\lambda$',
+        'μ': r'$\mu$',
+        'π': r'$\pi$',
+        'σ': r'$\sigma$',
+        'φ': r'$\phi$',
+        'ψ': r'$\psi$',
+        'ω': r'$\omega$',
+        'Α': r'$A$',
+        'Β': r'$B$',
+        'Γ': r'$\Gamma$',
+        'Δ': r'$\Delta$',
+        'Θ': r'$\Theta$',
+        'Λ': r'$\Lambda$',
+        'Π': r'$\Pi$',
+        'Σ': r'$\Sigma$',
+        'Φ': r'$\Phi$',
+        'Ψ': r'$\Psi$',
+        'Ω': r'$\Omega$',
+        
+        # Punctuation and symbols
+        '"': r'``',
+        '"': r"''",
+        ''': r"`",
+        ''': r"'",
+        '–': r'--',
+        '—': r'---',
+        '−': r'$-$',  # Unicode minus sign
+        '…': r'\ldots',
+        '°': r'$^\circ$',
+        '§': r'\S{}',
+        '¶': r'\P{}',
+        '©': r'\copyright{}',
+        '®': r'\textregistered{}',
+        '™': r'\texttrademark{}',
+        
+        # Fractions
+        '½': r'$\frac{1}{2}$',
+        '⅓': r'$\frac{1}{3}$',
+        '¼': r'$\frac{1}{4}$',
+        '¾': r'$\frac{3}{4}$',
+        '⅕': r'$\frac{1}{5}$',
+        '⅙': r'$\frac{1}{6}$',
+        '⅛': r'$\frac{1}{8}$',
+        
+        # Superscripts and subscripts (common ones)
+        '²': r'$^2$',
+        '³': r'$^3$',
+        '¹': r'$^1$',
+        '⁰': r'$^0$',
+        '⁴': r'$^4$',
+        '⁵': r'$^5$',
+        '⁶': r'$^6$',
+        '⁷': r'$^7$',
+        '⁸': r'$^8$',
+        '⁹': r'$^9$',
+        
+        # Currency
+        '€': r'\texteuro{}',
+        '£': r'\pounds{}',
+        '¥': r'\textyen{}',
+        '¢': r'\textcent{}',
     }
-    pattern = re.compile('|'.join(re.escape(k) for k in replacements))
-    return pattern.sub(lambda m: replacements[m.group()], text)
+    
+    # Apply replacements
+    for unicode_char, latex_equiv in unicode_replacements.items():
+        text = text.replace(unicode_char, latex_equiv)
+    
+    return text
+
+def latex_escape(text):
+    """Enhanced LaTeX escaping with Unicode handling"""
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    
+    # First handle Unicode characters
+    text = unicode_to_latex(text)
+    
+    # Then handle standard LaTeX special characters
+    replacements = {
+        '&': r'\&', 
+        '%': r'\%', 
+        '$': r'\$', 
+        '#': r'\#',
+        '_': r'\_', 
+        '{': r'\{', 
+        '}': r'\}', 
+        '~': r'\textasciitilde{}',
+        '^': r'\textasciicircum{}', 
+        '\\': r'\textbackslash{}'
+    }
+    
+    # Sort by length (longest first) to avoid partial replacements
+    pattern = re.compile('|'.join(re.escape(k) for k in sorted(replacements.keys(), key=len, reverse=True)))
+    text = pattern.sub(lambda m: replacements[m.group()], text)
+    
+    return text
+
+def clean_unicode_text(text):
+    """Clean and normalize Unicode text for LaTeX compatibility"""
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    
+    # Normalize Unicode (NFKD: canonical decomposition, then canonical combining)
+    text = unicodedata.normalize('NFKD', text)
+    
+    # Remove combining characters that might cause issues
+    text = ''.join(char for char in text if not unicodedata.combining(char))
+    
+    # Remove zero-width characters
+    zero_width_chars = ['\u200b', '\u200c', '\u200d', '\ufeff', '\u2060']
+    for char in zero_width_chars:
+        text = text.replace(char, '')
+    
+    return text
 
 def convert_to_png(src, dest):
     try:
@@ -221,9 +369,6 @@ def render_images(content, temp_image_dir, images_data=None):
     
     return image_pattern.sub(replace_image, content)
 
-
-
-
 def render_tables(content, table_data):
     def replace_table(match):
         table_id = match.group(1).strip()
@@ -255,16 +400,19 @@ def render_tables(content, table_data):
 
 def safe_latex_escape(text, table_data):
     """
-    Escape LaTeX special characters but preserve LaTeX commands generated by render_images and render_tables
+    Enhanced LaTeX escaping that handles Unicode and preserves LaTeX commands
     """
     if not isinstance(text, str):
         return str(text) if text is not None else ""
     
+    # First clean and normalize Unicode
+    text = clean_unicode_text(text)
+    
     parts = []
     current_pos = 0
     
-    # Find LaTeX figure and table blocks
-    latex_blocks_pattern = re.compile(r'\\begin\{(figure|table\*?)\}.*?\\end\{\1\}', re.DOTALL)
+    # Find LaTeX figure and table blocks, and math mode content
+    latex_blocks_pattern = re.compile(r'(\\begin\{(figure|table\*?)\}.*?\\end\{\2\}|\$[^$]*\$)', re.DOTALL)
     
     for match in latex_blocks_pattern.finditer(text):
         # Add escaped text before the LaTeX block
@@ -293,10 +441,10 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
         data = copy.deepcopy(parsed_data)
         table_data = data.get("table_data", {})
 
-        # Escape basic fields
-        data["title"] = latex_escape(data.get("title", "Untitled Document"))
-        data["abstract"] = latex_escape(data.get("abstract", ""))
-        data["keywords"] = latex_escape(data.get("keywords", ""))
+        # Enhanced escaping for basic fields
+        data["title"] = safe_latex_escape(data.get("title", "Untitled Document"), {})
+        data["abstract"] = safe_latex_escape(data.get("abstract", ""), {})
+        data["keywords"] = safe_latex_escape(data.get("keywords", ""), {})
 
         with tempfile.TemporaryDirectory() as tmpdir:
             print(f"[INFO] Working in temp directory: {tmpdir}")
@@ -305,7 +453,7 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
             for section in data.get("sections", []):
                 print(f"[DEBUG] Processing section: {section.get('heading', 'Unknown')}")
                 
-                section["heading"] = latex_escape(section.get("heading", ""))
+                section["heading"] = safe_latex_escape(section.get("heading", ""), {})
                 raw_content = section.get("content", "")
 
                 # Get images data for this section
@@ -316,7 +464,7 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                         img_path = img.get('path', '')
                         print(f"[DEBUG] Image {i}: {img_path[:50]}...")
                         
-                        # **THIS IS THE KEY FIX** - Add image placeholders to content
+                        # Add image placeholders to content
                         image_placeholder = f"[IMAGE: {img_path}]"
                         raw_content += f"\n\n{image_placeholder}\n\n"
                         print(f"[DEBUG] Added placeholder: {image_placeholder}")
@@ -331,14 +479,14 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                 
                 # Process subsections
                 for sub in section.get("subsections", []):
-                    sub["heading"] = latex_escape(sub.get("heading", ""))
+                    sub["heading"] = safe_latex_escape(sub.get("heading", ""), {})
                     raw_sub_content = sub.get("content", "")
                     rendered_sub = render_images(raw_sub_content, tmpdir)
                     rendered_sub = render_tables(rendered_sub, table_data)
                     sub["content"] = safe_latex_escape(rendered_sub, table_data)
 
-            # Process references
-            data["references"] = [latex_escape(ref) for ref in data.get("references", [])]
+            # Process references with enhanced escaping
+            data["references"] = [safe_latex_escape(ref, {}) for ref in data.get("references", [])]
 
             # Render LaTeX
             env = Environment(
@@ -357,8 +505,8 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
             
             print(f"[INFO] LaTeX file written to: {tex_path}")
 
-            # Run pdflatex twice for proper references
-            for run_num in [1, 2]:
+            # Run pdflatex three times for proper references and Unicode handling
+            for run_num in [1, 2, 3]:
                 print(f"[INFO] Running pdflatex (pass {run_num})")
                 result = subprocess.run(
                     ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, str(tex_path)],
@@ -367,25 +515,16 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                     cwd=tmpdir
                 )
                 
-                if result.returncode != 0:
+                # Only fail on the final pass
+                if result.returncode != 0 and run_num == 3:
                     error_log = result.stdout.decode("utf-8", errors="ignore") + "\n" + result.stderr.decode("utf-8", errors="ignore")
-                    print(f"[ERROR] pdflatex failed on pass {run_num}")
+                    print(f"[ERROR] pdflatex failed on final pass")
                     print(error_log)
                     return {
                         "error": f"LaTeX compilation failed on pass {run_num}",
                         "log": error_log,
                         "tex_code": tex_code
                     }
-                
-            # Add debug logging
-            for section in data.get("sections", []):
-                print(f"[DEBUG] Processing section: {section.get('heading', 'Unknown')}")
-                if section.get("images"):
-                    print(f"[DEBUG] Section has {len(section['images'])} images")
-                    for i, img in enumerate(section['images']):
-                        print(f"[DEBUG] Image {i}: {img.get('path', 'No path')[:50]}...")
-                
-            
 
             # Check if PDF was generated
             pdf_path = Path(tmpdir) / "paper.pdf"
@@ -401,8 +540,6 @@ def generate_pdf_from_data(parsed_data, output_path="static/temp.pdf"):
                     "log": log_output,
                     "tex_code": tex_code
                 }
-            
-            
 
     except FileNotFoundError as e:
         return {"error": f"Missing executable: {e.filename}. Please install LaTeX (texlive-full or similar)"}

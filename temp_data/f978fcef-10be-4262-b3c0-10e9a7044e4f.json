@@ -1,0 +1,164 @@
+{
+  "abstract": "—The rapid increase in data volume due to technolog- ical advancements necessitates using robust big data processing frameworks to analyze vast amounts of heterogeneous data. Apache Spark stands out as a state-of-the-art framework for big data processing, known for its fault tolerance, generality, high performance in in-memory data processing, and scalability. One of the key components of Apache Spark is the resilient distributed dataset (RDD) programming paradigm, which aids job scheduling by enabling efficient data partitioning and locality- aware task placement. However, effective job scheduling is crucial for optimizing resource utilization and minimizing job completion times in Apache Spark. This paper performs analysis of various Spark job schedulers, including FIFO (First In First Out), Fair, SJF (Shortest Job First), Adaptive, Service Level Agreement based schedulers, and Bipartite Graph modeling based schedulers. The analysis focuses on metrics that are crucial for performance enhancement, including efficiency, non-violation scenarios, average turnaround time, and average waiting time. By simulating the Apache Spark big data processing cluster and performing extensive experiments, our findings offer essential insights into the strengths and limitations of various schedulers. The research provides guidance for optimizing job scheduling in Apache Spark environments and enhancing future big data processing applications.",
+  "authors": [
+    "Vishnu Prasad Verma\nDeptt. of CSE\nIIIT Naya Raipur\nRaipur, (C.G), India vishnu@iiitnr.edu.in",
+    "Tanisha Sinha\nUniversity Teaching Department\nCSVTU, Bhilai\nBhilai, (C.G), India tanisha02sinha@gmail.com",
+    "Santosh Kumar\nDeptt. of CSE\nIIIT Naya Raipur\nRaipur, (C.G),India santosh@iiitnr.edu.in",
+    "Nenavath Srinivas Naik\nDeptt. of CSE\nIIITDM, Kurnool\nKurnool, (AP), India srinu@iiitk.ac.in",
+    "Abstract —The rapid increase in data volume due to technological advancements necessitates using robust big data processing frameworks to analyze vast amounts of heterogeneous data.\nApache Spark stands out as a state-of-the-art framework for big data processing, known for its fault tolerance, generality, high performance in in-memory data processing, and scalability.\nOne of the key components of Apache Spark is the resilient distributed dataset (RDD) programming paradigm, which aids job scheduling by enabling efficient data partitioning and localityaware task placement. However, effective job scheduling is crucial for optimizing resource utilization and minimizing job completion times in Apache Spark. This paper performs analysis of various Spark job schedulers, including FIFO (First In First\nOut), Fair, SJF (Shortest Job First), Adaptive, Service Level\nAgreement based schedulers, and Bipartite Graph modeling based schedulers. The analysis focuses on metrics that are crucial for performance enhancement, including efficiency, non-violation scenarios, average turnaround time, and average waiting time.\nBy simulating the Apache Spark big data processing cluster and performing extensive experiments, our findings offer essential insights into the strengths and limitations of various schedulers.\nThe research provides guidance for optimizing job scheduling in Apache Spark environments and enhancing future big data processing applications.\nIndex Terms —Apache Spark, Big data Processing, Distributed\nComputing Job scheduling, Performance Optimization,"
+  ],
+  "images": [],
+  "keywords": "—Apache Spark, Big data Processing, Distributed, Computing Job scheduling, Performance Optimization, ",
+  "references": [],
+  "sections": [
+    {
+      "content": "Dynamic &\nResource Aware",
+      "heading": "Adaptive\nScheduling",
+      "images": [
+        {
+          "caption": "Figure from page 2",
+          "filename": "page_2_img_1.png",
+          "height": 359,
+          "page": 2,
+          "path": "/static/images/2e1eda45/page_2_img_1.png",
+          "position": "center",
+          "size": "medium",
+          "width": 615
+        },
+        {
+          "caption": "Figure from page 6",
+          "filename": "page_6_img_1.png",
+          "height": 590,
+          "page": 6,
+          "path": "/static/images/2e1eda45/page_6_img_1.png",
+          "position": "center",
+          "size": "medium",
+          "width": 989
+        },
+        {
+          "caption": "Figure from page 6",
+          "filename": "page_6_img_2.png",
+          "height": 590,
+          "page": 6,
+          "path": "/static/images/2e1eda45/page_6_img_2.png",
+          "position": "center",
+          "size": "medium",
+          "width": 989
+        },
+        {
+          "caption": "Figure from page 7",
+          "filename": "page_7_img_1.png",
+          "height": 490,
+          "page": 7,
+          "path": "/static/images/2e1eda45/page_7_img_1.png",
+          "position": "center",
+          "size": "medium",
+          "width": 989
+        },
+        {
+          "caption": "Figure from page 7",
+          "filename": "page_7_img_2.png",
+          "height": 490,
+          "page": 7,
+          "path": "/static/images/2e1eda45/page_7_img_2.png",
+          "position": "center",
+          "size": "medium",
+          "width": 989
+        }
+      ],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "Scheduling",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "Machine\nLearning driven",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "Fig. 2. Milestones in the Evolution of Spark Job Scheduling and Storm, is evaluated across multiple dimensions such as usability, performance, generality, flexibility, scalability, fault tolerance, memory consumption, security, learning curve, popularity, and primary function.",
+      "heading": "Scheduling",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "Scheduling Approach\nScalability\nEfficiency\nFault Tolerance\nAdaptability\nShortest Job First (SJF)\nModerate\nHigh\nLow\nLow\nService Level Agreement (SLA)\nHigh\nHigh\nModerate\nHigh\nAdaptive Scheduling\nHigh\nHigh\nHigh\nHigh\nData-driven Priority Scheduling\nHigh\nHigh\nModerate\nHigh\nBipartite Graph\nHigh\nHigh\nModerate\nModerate\nFIFO (First-In-First-Out)\nHigh\nLow\nLow\nLow\nFair Scheduling\nModerate\nModerate\nModerate\nModerate performance, as well as challenges in maintaining stability and balance between responsiveness and consistency. Accurate data is crucial for decision-making; poor data quality can lead to scheduling issues.\nAjila T et al. [33] proposed that data-driven priority scheduling is a job scheduling approach that leverages patterns in task execution and resource allocation, using predictive, historical, and real-time data to optimize performance. This method analyzes data to make informed scheduling decisions that improve efficiency. However, it faces challenges related to complexity, data quality, overhead, adaptability, and maintaining fairness.\nFu Z et al. [34] has the contribution that bipartite graph modeling in scheduling represents relationships between tasks and resources to optimize task scheduling and resource allocation. One set of nodes corresponds to tasks, while the other set represents resources such as processing units, with edges indicating task-resource assignments. This approach can be complex due to the need to handle large complexities and identify optimal solutions, as well as real-time adjustments that may introduce overhead. Additionally, managing constraints can be challenging, potentially causing performance issues.\nLu S. et al. [35] addresses two limitations hindering Spark’s performance: data partitioning and job scheduling in heterogeneous clusters. The authors propose a dynamic partitioning strategy to tackle data skew and a greedy scheduling algorithm that considers both node capabilities and task requirements.\nTheir experiments show these methods improve overall job completion time and resource utilization.\nThe analysis of various job scheduling approaches has a significant impact on practitioners and researchers in the field of big data processing. The table II compares the Evaluation of Scheduling Techniques on Multiple Metrics for different algorithms from the literature. IV. M ETHODOLOGY\nThe methods for simulating and assessing different Spark schedulers are described in this section. This experiment aims to analyze the schedulers according to crucial metrics and parameters that are very crucial in job scheduling in big data processing. The parameters include Efficiency analysis, NonViolations, Average Waiting Time, and Average Turnaround\nTime. Its objectives are to evaluate waiting times for job processing, average turnaround times, job completion success rates, and efficiency. B. Scheduling Algorithms 1) First In First Out(FIFO): The FIFO scheduling algorithm is the basic and easiest of all the scheduling algorithms available, where jobs are chosen to execute based on their time of arrival. The job that comes gets scheduled first. Priority ( J i ) = 1 2) Fair Scheduling: A fair scheduler in Spark allocates resources such that all jobs get, on average, an equal share of computational resources over time. The resources are shared fairly among all the jobs available to schedule at that moment. Share ( J i ) = 1\nNumber of Active Jobs 3) Shortest Job First(SJF): In the SJF scheduler, the jobs that have shorter job completion times are scheduled before longer ones. This scheduler is based on predicting the execution time of jobs scheduled. Priority ( J i ) = 1",
+      "heading": "C. Beyond Speed: Spark’s Analytical Powerhouse",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "4) Adaptive Scheduling: Adaptive scheduler in Spark dynamically adjusts resource allocation and execution plans based on runtime information. The adaptive scheduler modifies priorities continuously in response to workload and system state considerations. Priority ( J i ) = w 1 e i + w 2",
+      "heading": "e i",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "where w 1 and w 2 are weights assigned based on the users chosen parameters.\n5) Bipartite Graph Modelling Scheduling: The bipartite graph modeling scheduling is based on data locality. A bipartite graph is used to optimize scheduling in Spark by representing the relationship between jobs and computational resources.\nBipartite scheduler nodes stand for jobs and resources, whereas edges show possible assignments.",
+      "heading": "t i",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "( J i ,R j ) ∈ E w ij Priority ( J i ) = 1\nSLA i − ( t current − t i ) 7) Priority Scheduling: A priority scheduler in Apache\nSpark schedules jobs based on assigned priority levels. Jobs with high priority get schedules before low-priority jobs.\nIt takes into account the duration of the job as well as predetermined priority levels by combining SJF with priority scheduling.\nPriority ( J i ) = p i e i where p i is the priority of job J i .",
+      "heading": "Maximize\nX",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "The scheduling algorithms’ efficiency is assessed using the following metrics:\n1) Efficiency Analysis (EFF): Efficiency quantifies how well the scheduling algorithm makes use of the resources at its disposal to finish tasks. EFF = Total Execution Time Total Resource Time where Total Resource Time is the total amount of resources utilized multiplied by the amount of time they are used, and Total Execution Time is the total of all tasks’ execution periods.\n2) Non-Violation Rate (NVR): The percentage of jobs that satisfy their SLA requirements is measured by NVR. NVR = Number of Jobs Meeting SLA Total Number of Jobs 3) Average Turnaround Time (TAT): Turnaround time is the amount of time needed to finish a work from the moment it is delivered. Better performance is shown by a reduced average turnaround time. TAT ( J i ) = t completion ( J i ) − t i Average TAT =\nP M i =1 TAT ( J i ) M where M is the total number of jobs.\n4) Average Waiting Time (AWT): The amount of time a work waits in the queue before being completed is known as the waiting time. Better performance is shown by a reduced average waiting time. WT ( J i ) = TAT ( J i ) − e i Average WT =\nP M i =1 WT ( J i )",
+      "heading": "C. Performance Metrics",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "V. R ESULTS A NALYSIS AND D ISCUSSION",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "A. Experimental setup We performed extensive simulation experiments on a system with an x64 architecture equipped with an Intel i3 CPU with 2 cores and 4 processors, each operating at 2.00 GHz.\nWe have efficiently made different scheduler programs in python language that act as real schedulers. We developed a Python-based framework that acts as a realistic big data processing cluster test environment, simulating real-world conditions for schedulers. The simulation assesses the effectiveness and dependability of various scheduling algorithms, offering valuable insights for analyzing big data processing. It evaluates the capabilities of schedulers, including FIFO, Fair,\nSJF, Adaptive, SLA-based scheduler, Priority-based scheduler, bipartite graph modeling, and their approach to managing job deadlines, resource constraints, and overall system efficiency.\nWe have compared the scheduler in the crucial metrics of job scheduling, including efficiency analysis, Non-violation of the deadline, average waiting time, and average turnaround time.",
+      "heading": "In this section, we present the experimental setup, result analysis, and discussion on issues and future research directions",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "B. Result analysis",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "Fig. 4. Non Violations Percentage for Different Schedulers be found in GitHub link 1 . The dataset encompasses various parameters such as task ID, duration, dependencies, resource requirements, priority, SLA deadline, and arrival time. This dataset serves as the foundation for evaluating the performance of different scheduling algorithms.\nScheduling algorithms were evaluated based on essential metrics that are crucial in gaining high performance, including efficiency analysis (eA) and non-violations percentage, average turnaround time(ATT), and average waiting time (AWT).\nEfficiency analysis represents efficiency in the utilization of the resource as expected and full completion of tasks within its duration. Larger eA means better efficiency, which means the scheduler is doing an excellent job for the resources it manages and gets tasks completed on time. The non-violations percentage shows the share of jobs that fulfilled all of their\nSLAs. A higher non-violations percentage means better adherence to SLAs, which is what we are looking for since our end goal is reliability and better quality of service. Lower\nATT indicates a more efficient scheduling mechanism, with faster job completion, while lower AWT reflects quicker job scheduling, reducing delays and improving resource utilization. Both metrics are essential for evaluating the effectiveness and responsiveness of Spark scheduling algorithms, especially under varying workloads.\nThe fig. shows 3 efficiency Analysis (%) that the Adaptive scheduler functions more effectively than all of the other\nSpark job scheduling algorithms, with an efficiency of 71.2%, according to the efficiency study (eA%) of the other algorithms. Additionally, the SLA scheduler performs admirably, with an efficiency of 62.5%. Both FIFO and SJF schedulers have a slightly more than 49% efficiency comparison. The\nBipartiteGraph scheduler has the lowest efficiency in this examination, at 34.6%, indicating its relative inefficiency.\nThe Fair and Priority schedulers, on the other hand, show reasonable efficiency at 39.3% and 43.5%, respectively.\nFig. 4 shows Non-Violations (%) for different schedulers, illustrating the reliability of various Spark job scheduling algorithms in adhering to deadlines or SLAs. Both the Adaptive",
+      "heading": "Fig. 3. Efficiency Analysis (eA) for Different Schedulers",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "Fig. 5. Average Turnaround Time for Different Schedulers Fig. 6. Average Waiting Time for Different Schedulers edge, researchers and practitioners can make well-informed judgments about their unique big data necessity.\nWhen we look at various job scheduling strategies, we see many interesting study opportunities. One direction to work on is to devise a hybrid scheduling approach formed by consolidating multiple algorithms. This integration has the potential of creating customized solutions, specialized in dealing with uniquely challenging datasets.\nAnother way can be utilizing machine learning and deep learning techniques to predict the workload. So, through predictive models, big data framework users can very actively control schedules based on resource-predicted needs to operate more responsive and efficient systems.\nIn addition, researchers can further develop and establish approaches to evaluate scheduling strategies more effectively with standard methods in order to have more reliable comparisons between them. It establishes guidelines to allow researchers a means for facilitating the comparison of the variations of different incurred processes for creating areas needed for improvement.",
+      "heading": "C. Issues and Future Directions",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "VI. C ONCLUSION",
+      "images": [],
+      "subsections": []
+    },
+    {
+      "content": "",
+      "heading": "R EFERENCES",
+      "images": [],
+      "subsections": []
+    }
+  ],
+  "table_data": {},
+  "title": "## \"A Resource Allocation Framework for Dynamic Networked Systems\""
+}
