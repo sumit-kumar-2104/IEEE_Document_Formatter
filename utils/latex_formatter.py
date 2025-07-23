@@ -7,6 +7,7 @@ import base64
 import uuid
 import unicodedata
 
+
 # IEEE Conference Template
 IEEE_CONFERENCE_TEMPLATE = r"""
 \documentclass[conference]{IEEEtran}
@@ -23,6 +24,7 @@ IEEE_CONFERENCE_TEMPLATE = r"""
 \usepackage[export]{adjustbox}
 \usepackage{cite}
 
+
 \title{<< title >>}
 \author{
 {% if authors %}
@@ -35,8 +37,10 @@ IEEE_CONFERENCE_TEMPLATE = r"""
 {% endif %}
 }
 
+
 \begin{document}
 \maketitle
+
 
 {% if abstract %}
 \begin{abstract}
@@ -44,21 +48,25 @@ IEEE_CONFERENCE_TEMPLATE = r"""
 \end{abstract}
 {% endif %}
 
+
 {% if keywords %}
 \begin{IEEEkeywords}
 << keywords >>
 \end{IEEEkeywords}
 {% endif %}
 
+
 {% for section in sections %}
 \section{<< section.heading >>}
 << section.content >>
+
 
 {% for sub in section.subsections %}
 \subsection{<< sub.heading >>}
 << sub.content >>
 {% endfor %}
 {% endfor %}
+
 
 {% if references %}
 \begin{thebibliography}{99}
@@ -68,8 +76,10 @@ IEEE_CONFERENCE_TEMPLATE = r"""
 \end{thebibliography}
 {% endif %}
 
+
 \end{document}
 """
+
 
 # IEEE Journal Template
 IEEE_JOURNAL_TEMPLATE = r"""
@@ -88,6 +98,7 @@ IEEE_JOURNAL_TEMPLATE = r"""
 \usepackage{cite}
 \usepackage{balance}
 
+
 \title{<< title >>}
 \author{
 {% if authors %}
@@ -101,11 +112,14 @@ IEEE_JOURNAL_TEMPLATE = r"""
 {% endif %}
 }
 
+
 \markboth{Journal Name, Vol. XX, No. XX, Month Year}
 {Author \MakeLowercase{\textit{et al.}}: Paper Title}
 
+
 \begin{document}
 \maketitle
+
 
 {% if abstract %}
 \begin{abstract}
@@ -113,23 +127,28 @@ IEEE_JOURNAL_TEMPLATE = r"""
 \end{abstract}
 {% endif %}
 
+
 {% if keywords %}
 \begin{IEEEkeywords}
 << keywords >>
 \end{IEEEkeywords}
 {% endif %}
 
+
 \IEEEpeerreviewmaketitle
+
 
 {% for section in sections %}
 \section{<< section.heading >>}
 << section.content >>
+
 
 {% for sub in section.subsections %}
 \subsection{<< sub.heading >>}
 << sub.content >>
 {% endfor %}
 {% endfor %}
+
 
 {% if references %}
 \begin{thebibliography}{99}
@@ -139,9 +158,11 @@ IEEE_JOURNAL_TEMPLATE = r"""
 \end{thebibliography}
 {% endif %}
 
+
 \balance
 \end{document}
 """
+
 
 IEEE_TRANSACTIONS_TEMPLATE = r"""
 \documentclass[journal]{IEEEtran}
@@ -159,6 +180,7 @@ IEEE_TRANSACTIONS_TEMPLATE = r"""
 \usepackage{cite}
 \usepackage{color}
 
+
 \title{<< title >>}
 \author{
 {% if authors %}
@@ -172,11 +194,14 @@ IEEE_TRANSACTIONS_TEMPLATE = r"""
 {% endif %}
 }
 
+
 \markboth{IEEE Transactions on Subject, Vol. XX, No. XX, Month Year}
 {Author \MakeLowercase{\textit{et al.}}: Paper Title}
 
+
 \begin{document}
 \maketitle
+
 
 {% if abstract %}
 \begin{abstract}
@@ -184,13 +209,16 @@ IEEE_TRANSACTIONS_TEMPLATE = r"""
 \end{abstract}
 {% endif %}
 
+
 {% if keywords %}
 \begin{IEEEkeywords}
 << keywords >>
 \end{IEEEkeywords}
 {% endif %}
 
+
 \IEEEpeerreviewmaketitle
+
 
 {% for section in sections %}
 {% if loop.first %}
@@ -201,14 +229,17 @@ IEEE_TRANSACTIONS_TEMPLATE = r"""
 << section.content >>
 {% endif %}
 
+
 {% for sub in section.subsections %}
 \subsection{<< sub.heading >>}
 << sub.content >>
 {% endfor %}
 {% endfor %}
 
+
 \section*{Acknowledgment}
 The authors would like to thank the anonymous reviewers for their valuable comments and suggestions.
+
 
 {% if references %}
 \begin{thebibliography}{99}
@@ -218,12 +249,15 @@ The authors would like to thank the anonymous reviewers for their valuable comme
 \end{thebibliography}
 {% endif %}
 
+
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo}}]{Author Name}
 Biography text here. The author received the B.S. degree from University in Year, and the Ph.D. degree from University in Year. His research interests include...
 \end{IEEEbiography}
 
+
 \end{document}
 """
+
 
 
 
@@ -244,6 +278,7 @@ IEEE_LETTERS_TEMPLATE = r"""
 \usepackage[export]{adjustbox}
 \usepackage{cite}
 
+
 \title{<< title >>}
 \author{
 {% if authors %}
@@ -254,10 +289,13 @@ IEEE_LETTERS_TEMPLATE = r"""
 {% endif %}
 }
 
+
 \markboth{IEEE Letters Subject, Vol. XX, No. XX, Month Year}{}
+
 
 \begin{document}
 \maketitle
+
 
 {% if abstract %}
 \begin{abstract}
@@ -265,11 +303,13 @@ IEEE_LETTERS_TEMPLATE = r"""
 \end{abstract}
 {% endif %}
 
+
 {% if keywords %}
 \begin{IEEEkeywords}
 << keywords >>
 \end{IEEEkeywords}
 {% endif %}
+
 
 {% for section in sections %}
 {% if loop.first %}
@@ -279,11 +319,13 @@ IEEE_LETTERS_TEMPLATE = r"""
 << section.content >>
 {% endif %}
 
+
 {% for sub in section.subsections %}
 \subsection{<< sub.heading >>}
 << sub.content >>
 {% endfor %}
 {% endfor %}
+
 
 {% if references %}
 \begin{thebibliography}{99}
@@ -293,8 +335,10 @@ IEEE_LETTERS_TEMPLATE = r"""
 \end{thebibliography}
 {% endif %}
 
+
 \end{document}
 """
+
 
 # Template dictionary
 TEMPLATES = {
@@ -303,6 +347,7 @@ TEMPLATES = {
     'transactions': IEEE_TRANSACTIONS_TEMPLATE,
     'letter': IEEE_LETTERS_TEMPLATE
 }
+
 
 def unicode_to_latex(text):
     """Convert common Unicode characters to LaTeX equivalents"""
@@ -319,6 +364,8 @@ def unicode_to_latex(text):
         '≤': r'$\leq$',
         '≥': r'$\geq$',
         '≠': r'$\neq$',
+        '≪': r'$\ll$',          # Much less than
+        '≫': r'$\gg$',          # Much greater than
         '≈': r'$\approx$',
         '±': r'$\pm$',
         '×': r'$\times$',
@@ -412,6 +459,7 @@ def unicode_to_latex(text):
     
     return text
 
+
 def latex_escape(text):
     """Enhanced LaTeX escaping with Unicode handling"""
     if not isinstance(text, str):
@@ -440,6 +488,7 @@ def latex_escape(text):
     
     return text
 
+
 def clean_unicode_text(text):
     """Clean and normalize Unicode text for LaTeX compatibility"""
     if not isinstance(text, str):
@@ -458,6 +507,7 @@ def clean_unicode_text(text):
     
     return text
 
+
 def convert_to_png(src, dest):
     try:
         with Image.open(src) as img:
@@ -468,6 +518,7 @@ def convert_to_png(src, dest):
         print(f"[ERROR] Failed to convert image {src}: {e}")
         return False
 
+
 def is_valid_png(filepath):
     try:
         with Image.open(filepath) as img:
@@ -476,8 +527,10 @@ def is_valid_png(filepath):
     except Exception:
         return False
 
+
 image_pattern = re.compile(r'\[IMAGE:\s*([^\]]+)\]')
 table_pattern = re.compile(r'\[TABLE:\s*([^\]]+)\]')
+
 
 def render_images(content, temp_image_dir, images_data=None):
     import base64
@@ -562,6 +615,7 @@ def render_images(content, temp_image_dir, images_data=None):
             
             print(f"[DEBUG] Processing file image: {full_src} -> {full_dest}")
 
+
             # Get image metadata
             img_size = 'medium'
             img_caption = f"Image: {latex_escape(filename)}"
@@ -572,6 +626,7 @@ def render_images(content, temp_image_dir, images_data=None):
                         img_size = img_data.get('size', 'medium')
                         img_caption = latex_escape(img_data.get('caption', img_caption))
                         break
+
 
             if os.path.exists(full_src):
                 try:
@@ -611,6 +666,7 @@ def render_images(content, temp_image_dir, images_data=None):
     return result
 
 
+
 def render_tables(content, table_data):
     def replace_table(match):
         table_id = match.group(1).strip()
@@ -639,6 +695,7 @@ def render_tables(content, table_data):
             return r"\textbf{[Table not found]}"
     
     return table_pattern.sub(replace_table, content)
+
 
 def safe_latex_escape(text, table_data):
     """
@@ -673,23 +730,63 @@ def safe_latex_escape(text, table_data):
     
     return ''.join(parts)
 
+
 def parse_authors_from_text(authors_list):
-    """Parse author information from text"""
+    """Parse author information from text with better error handling"""
     if not authors_list:
         return []
     
     authors = []
     for author_text in authors_list:
-        # Basic parsing - you can make this more sophisticated
+        if not author_text or not isinstance(author_text, str):
+            continue
+            
+        author_text = author_text.strip()
+        if not author_text:
+            continue
+        
+        # Initialize default author info
         author_info = {
-            'name': author_text.split('@')[0].strip() if '@' in author_text else author_text.strip(),
-            'email': author_text.split('@')[1].split()[0] + '@' + author_text.split('@')[1].split()[1] if '@' in author_text else '',
-            'affiliation': 'University/Institution',  # Default
-            'membership': 'Student Member'  # Default
+            'name': author_text,
+            'email': '',
+            'affiliation': 'University/Institution',
+            'membership': 'Student Member'
         }
+        
+        # Try to extract email if present
+        if '@' in author_text:
+            try:
+                # Split by @ to get potential email parts
+                parts = author_text.split('@')
+                if len(parts) >= 2:
+                    # Extract name (everything before @)
+                    name_part = parts[0].strip()
+                    if name_part:
+                        author_info['name'] = name_part
+                    
+                    # Extract email (try to reconstruct from parts after @)
+                    email_part = parts[1].strip()
+                    if email_part:
+                        # Handle cases where there might be spaces or other text after email
+                        email_tokens = email_part.split()
+                        if len(email_tokens) >= 1:
+                            # Take the first token as the domain part
+                            domain = email_tokens[0]
+                            # Reconstruct email
+                            if '.' in domain:  # Basic check for valid domain
+                                author_info['email'] = f"{name_part.split()[-1].lower()}@{domain}"
+                            else:
+                                # If domain doesn't look valid, try a different approach
+                                author_info['email'] = f"author@{domain}.edu"
+            except Exception as e:
+                print(f"[WARNING] Failed to parse email from '{author_text}': {e}")
+                # Keep the original text as name if email parsing fails
+                author_info['name'] = author_text.split('@')[0].strip() if '@' in author_text else author_text
+        
         authors.append(author_info)
     
     return authors
+
 
 
 # Add this function before generate_pdf_from_data in latex_formatter.py
@@ -710,6 +807,7 @@ def clean_content_for_parstart(content):
 
 
 
+
 def generate_pdf_from_data(parsed_data, template_type='conference', output_path="static/temp.pdf"):
     try:
         from pathlib import Path
@@ -717,8 +815,10 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
         import subprocess
         import copy
 
+
         data = copy.deepcopy(parsed_data)
         table_data = data.get("table_data", {})
+
 
         # Get the selected template
         if template_type == 'journal':
@@ -733,18 +833,20 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
         print(f"[DEBUG] Using template: {template_type}")
         print(f"[DEBUG] Processing {len(data.get('sections', []))} sections")
 
+
         # Enhanced escaping for basic fields
         data["title"] = safe_latex_escape(data.get("title", "Untitled Document"), {})
         data["abstract"] = safe_latex_escape(data.get("abstract", ""), {})
         data["keywords"] = safe_latex_escape(data.get("keywords", ""), {})
         
-        # Parse authors
+        # Parse authors with improved error handling
         authors_text = data.get("authors", [])
         if isinstance(authors_text, list) and len(authors_text) > 0 and isinstance(authors_text[0], str):
             # Convert old string format to new dict format
             data["authors"] = parse_authors_from_text(authors_text)
         elif not isinstance(data.get("authors", []), list) or len(data.get("authors", [])) == 0:
             data["authors"] = []
+
 
         with tempfile.TemporaryDirectory() as tmpdir:
             print(f"[INFO] Working in temp directory: {tmpdir}")
@@ -757,6 +859,7 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                 
                 section["heading"] = safe_latex_escape(section.get("heading", ""), {})
                 raw_content = section.get("content", "")
+
 
                 # Get images data for this section
                 section_images = section.get("images", [])
@@ -778,12 +881,14 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                         else:
                             print(f"[DEBUG] Placeholder already exists in content")
 
+
                 # Then in generate_pdf_from_data, add this before template rendering:
                 if template_type == 'transactions' and data.get("sections"):
                     first_section = data["sections"][0]
                     if first_section.get("content"):
                         clean_first_content = clean_content_for_parstart(first_section["content"])
                         first_section["clean_content"] = clean_first_content
+
 
                 
                 # Process inline content first
@@ -809,8 +914,10 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                     rendered_sub = render_tables(rendered_sub, table_data)
                     sub["content"] = safe_latex_escape(rendered_sub, table_data)
 
+
             # Process references with enhanced escaping
             data["references"] = [safe_latex_escape(ref, {}) for ref in data.get("references", [])]
+
 
             # Render LaTeX
             env = Environment(
@@ -819,14 +926,8 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                 variable_end_string='>>',
                 autoescape=False
             )
-            # template = env.from_string(template_code)
-
-
-
-
 
             template = env.from_string(template_code)
-
             tex_code = template.render(**data)
 
             # Save .tex file for debugging
@@ -839,6 +940,7 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
             # Debug: Check if images are in tex code
             image_count = tex_code.count('\\includegraphics')
             print(f"[DEBUG] Found {image_count} \\includegraphics commands in LaTeX")
+
 
             # Run pdflatex
             for run_num in [1, 2, 3]:
@@ -861,6 +963,7 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                         "tex_code": tex_code
                     }
 
+
             # Check if PDF was generated
             pdf_path = Path(tmpdir) / "paper.pdf"
             if pdf_path.exists():
@@ -875,6 +978,7 @@ def generate_pdf_from_data(parsed_data, template_type='conference', output_path=
                     "log": log_output,
                     "tex_code": tex_code
                 }
+
 
     except FileNotFoundError as e:
         return {"error": f"Missing executable: {e.filename}. Please install LaTeX (texlive-full or similar)"}
