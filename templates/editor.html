@@ -141,6 +141,89 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
 }
 
 
+/* Add to your existing CSS */
+.section-images {
+    margin: 10px 0;
+}
+
+/* Image preview styling */
+.image-preview {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #888;
+    border-radius: 4px;
+    margin: 10px 0;
+    display: block;
+    object-fit: contain;
+}
+
+.image-preview.small {
+    max-height: 120px;
+}
+
+.image-preview.medium {
+    max-height: 180px;
+}
+
+.image-preview.large {
+    max-height: 250px;
+}
+
+.image-container {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.inline-image img {
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border: 2px solid #888;
+    border-radius: 4px;
+    margin: 10px 0;
+    display: block;
+}
+
+.image-caption {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    box-sizing: border-box;
+}
+
+.image-caption:focus {
+    outline: none;
+    border-color: #0d47a1;
+    box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
+}
+
+/* Image size select styling */
+.image-size {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    box-sizing: border-box;
+}
+
+.image-size:focus {
+    outline: none;
+    border-color: #0d47a1;
+}
+
+
+
 .control-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -178,26 +261,23 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
 
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
 }
-
 
 .section-label {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
 }
 
-
 .section-actions {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 5px;
 }
 
 
@@ -311,35 +391,6 @@ background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://so
   background: rgba(255, 255, 255, 0.95);
   position: relative;
 }
-
-
-.image-preview {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 10px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-
-.image-preview.small {
-  max-width: 200px;
-}
-
-
-.image-preview.medium {
-  max-width: 400px;
-}
-
-
-.image-preview.large {
-  max-width: 600px;
-}
-
-
 
 .table-container {
   border: 2px solid #e9ecef;
@@ -861,47 +912,156 @@ function createSectionElement(section, index) {
 
 
 function createImageElement(img, sectionIndex, imageIndex) {
-  const imageDiv = document.createElement('div');
-  imageDiv.className = 'image-container';
-  imageDiv.innerHTML = `
-    <div class="section-header">
-      <span class="section-label">Image ${imageIndex + 1}</span>
-      <div class="section-actions">
-        <button class="action-btn delete" onclick="deleteImage(${sectionIndex}, ${imageIndex})">🗑</button>
-      </div>
-    </div>
-    <img src="${img.path}" class="image-preview ${img.size || 'medium'}" alt="${img.caption || 'Image'}" />
-    <input type="text" class="image-caption" data-sec="${sectionIndex}" data-img="${imageIndex}" 
-           value="${img.caption || ''}" placeholder="Enter image caption..." 
-           style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;" />
-    <select class="image-size" data-sec="${sectionIndex}" data-img="${imageIndex}" 
-            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-      <option value="small" ${img.size === 'small' ? 'selected' : ''}>Small</option>
-      <option value="medium" ${img.size === 'medium' ? 'selected' : ''}>Medium</option>
-      <option value="large" ${img.size === 'large' ? 'selected' : ''}>Large</option>
-    </select>
-  `;
-  return imageDiv;
-}
-function handleImageSizeChange(sectionIndex, imageIndex, newSize) {
-  // Update the data model
-  if (parsedData.sections[sectionIndex] && parsedData.sections[sectionIndex].images && parsedData.sections[sectionIndex].images[imageIndex]) {
-    parsedData.sections[sectionIndex].images[imageIndex].size = newSize;
-  }
-  
-  // Update only the specific image element
-  const imageElement = document.querySelector(`img[data-sec="${sectionIndex}"][data-img="${imageIndex}"]`);
-  if (imageElement) {
-    imageElement.className = `image-preview ${newSize}`;
-  }
-  
-  // Trigger PDF regeneration
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    regenerateMarkdown();
-  }, 500);
+  const imageDiv = document.createElement('div');
+  imageDiv.className = 'image-container';
+  imageDiv.innerHTML = `
+    <div class="section-header">
+      <span class="section-label">Image ${imageIndex + 1}</span>
+      <div class="section-actions">
+        <button class="action-btn delete" onclick="deleteImage(${sectionIndex}, ${imageIndex})">🗑</button>
+      </div>
+    </div>
+    <img src="${img.path}" class="image-preview ${img.size || 'medium'}" alt="${img.caption || 'Image'}" />
+    <input type="text" class="image-caption" data-sec="${sectionIndex}" data-img="${imageIndex}" 
+           value="${img.caption || ''}" placeholder="Enter image caption..." />
+    <select class="image-size" data-sec="${sectionIndex}" data-img="${imageIndex}">
+      <option value="small" ${img.size === 'small' ? 'selected' : ''}>Small</option>
+      <option value="medium" ${img.size === 'medium' || !img.size ? 'selected' : ''}>Medium</option>
+      <option value="large" ${img.size === 'large' ? 'selected' : ''}>Large</option>
+    </select>
+  `;
+  return imageDiv;
 }
 
+function handleImageCaptionChange(sectionIndex, imageIndex, newCaption) {
+  // Update the data model
+  if (parsedData.sections[sectionIndex] && parsedData.sections[sectionIndex].images && parsedData.sections[sectionIndex].images[imageIndex]) {
+    parsedData.sections[sectionIndex].images[imageIndex].caption = newCaption;
+  }
+  
+  // Trigger PDF regeneration
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    regenerateMarkdown();
+  }, 1000);
+}
+
+function addEventListeners() {
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        captureEditedData();
+        regenerateMarkdown();
+      }, 1500);
+    });
+  });
+
+  document.querySelectorAll('.image-caption').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const sectionIndex = parseInt(e.target.dataset.sec);
+      const imageIndex = parseInt(e.target.dataset.img);
+      const newCaption = e.target.value;
+      
+      handleImageCaptionChange(sectionIndex, imageIndex, newCaption);
+    });
+  });
+
+  document.querySelectorAll('.image-size').forEach(el => {
+    el.addEventListener('change', (e) => {
+      const sectionIndex = parseInt(e.target.dataset.sec);
+      const imageIndex = parseInt(e.target.dataset.img);
+      const newSize = e.target.value;
+      
+      handleImageSizeChange(sectionIndex, imageIndex, newSize);
+    });
+  });
+}
+
+function captureEditedData() {
+  // Capture title
+  const titleEl = document.querySelector('[data-key="title"]');
+  if (titleEl) parsedData.title = titleEl.innerText.trim();
+
+  // Capture abstract
+  const abstractEl = document.querySelector('[data-key="abstract"]');
+  if (abstractEl) parsedData.abstract = abstractEl.innerText.trim();
+
+  // Capture keywords
+  const keywordsEl = document.querySelector('[data-key="keywords"]');
+  if (keywordsEl) parsedData.keywords = keywordsEl.innerText.trim();
+
+  // Capture template type
+  const templateSelector = document.getElementById('templateSelector');
+  if (templateSelector) {
+    parsedData.template_type = templateSelector.value;
+  } else if (!parsedData.template_type) {
+    parsedData.template_type = 'conference';
+  }
+
+  // Capture sections
+  document.querySelectorAll('[data-sec]').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const subsec = el.dataset.subsec ? parseInt(el.dataset.subsec) : null;
+    const sub = el.dataset.sub;
+    const text = el.innerText.trim();
+
+    if (!parsedData.sections[sec]) parsedData.sections[sec] = { heading: '', content: '', subsections: [], images: [] };
+
+    if (subsec !== null) {
+      if (!parsedData.sections[sec].subsections[subsec]) {
+        parsedData.sections[sec].subsections[subsec] = { heading: '', content: '', images: [] };
+      }
+      parsedData.sections[sec].subsections[subsec][sub] = text;
+    } else {
+      parsedData.sections[sec][sub] = text;
+    }
+  });
+
+  // Capture references
+  document.querySelectorAll('[data-ref]').forEach(el => {
+    const ref = parseInt(el.dataset.ref);
+    if (parsedData.references) {
+      parsedData.references[ref] = el.innerText.trim();
+    }
+  });
+
+  // Capture image captions and sizes
+  document.querySelectorAll('.image-caption').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const img = parseInt(el.dataset.img);
+    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
+      parsedData.sections[sec].images[img].caption = el.value.trim();
+    }
+  });
+
+  document.querySelectorAll('.image-size').forEach(el => {
+    const sec = parseInt(el.dataset.sec);
+    const img = parseInt(el.dataset.img);
+    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
+      parsedData.sections[sec].images[img].size = el.value;
+    }
+  });
+
+  // Capture table data
+  document.querySelectorAll('.editable-table').forEach(table => {
+    const tableId = parseInt(table.dataset.tableId);
+    const tableData = [];
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td[contenteditable]');
+      const rowData = [];
+      cells.forEach(cell => {
+        rowData.push(cell.innerText.trim());
+      });
+      if (rowData.length > 0) tableData.push(rowData);
+    });
+    
+    if (!parsedData.table_data) parsedData.table_data = {};
+    parsedData.table_data[tableId] = tableData;
+  });
+}
 
 
 function createSubsectionElement(subsection, sectionIndex, subsectionIndex) {
@@ -1062,151 +1222,7 @@ function renderEditableStructure() {
 }
 
 
-function addEventListeners() {
-  document.querySelectorAll('[contenteditable]').forEach(el => {
-    el.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        captureEditedData();
-        regenerateMarkdown();
-      }, 1500);
-    });
-  });
 
-
-  document.querySelectorAll('.image-caption').forEach(el => {
-    el.addEventListener('change', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        captureEditedData();
-        regenerateMarkdown();
-      }, 1000);
-    });
-  });
-
-
-  document.querySelectorAll('.image-size').forEach(el => {
-    el.addEventListener('change', (e) => {
-      const sectionIndex = parseInt(e.target.dataset.sec);
-      const imageIndex = parseInt(e.target.dataset.img);
-      const newSize = e.target.value;
-      
-      handleImageSizeChange(sectionIndex, imageIndex, newSize);
-    });
-  });
-}
-
-
-
-function captureEditedData() {
-  // Capture title
-  const titleEl = document.querySelector('[data-key="title"]');
-  if (titleEl) parsedData.title = titleEl.innerText.trim();
-
-
-  // Capture abstract
-  const abstractEl = document.querySelector('[data-key="abstract"]');
-  if (abstractEl) parsedData.abstract = abstractEl.innerText.trim();
-
-
-  // Capture keywords
-  const keywordsEl = document.querySelector('[data-key="keywords"]');
-  if (keywordsEl) parsedData.keywords = keywordsEl.innerText.trim();
-
-
-  const templateSelector = document.getElementById('templateSelector');
-  if (templateSelector) {
-    parsedData.template_type = templateSelector.value;
-  } else if (!parsedData.template_type) {
-    parsedData.template_type = 'conference'; // fallback
-  }
-
-
-  // Capture sections
-  document.querySelectorAll('[data-sec]').forEach(el => {
-    const sec = parseInt(el.dataset.sec);
-    const subsec = el.dataset.subsec ? parseInt(el.dataset.subsec) : null;
-    const sub = el.dataset.sub;
-    const text = el.innerText.trim();
-
-
-    if (!parsedData.sections[sec]) parsedData.sections[sec] = { heading: '', content: '', subsections: [], images: [] };
-
-
-    if (subsec !== null) {
-      if (!parsedData.sections[sec].subsections[subsec]) {
-        parsedData.sections[sec].subsections[subsec] = { heading: '', content: '' };
-      }
-      parsedData.sections[sec].subsections[subsec][sub] = text;
-    } else {
-      parsedData.sections[sec][sub] = text;
-    }
-  });
-
-
-  // Capture references
-  document.querySelectorAll('[data-ref]').forEach(el => {
-    const ref = parseInt(el.dataset.ref);
-    if (parsedData.references) {
-      parsedData.references[ref] = el.innerText.trim();
-    }
-  });
-
-
-  // Capture image captions and sizes
-  document.querySelectorAll('.image-caption').forEach(el => {
-    const sec = parseInt(el.dataset.sec);
-    const img = parseInt(el.dataset.img);
-    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
-      parsedData.sections[sec].images[img].caption = el.value.trim();
-    }
-  });
-
-
-  document.querySelectorAll('.image-size').forEach(el => {
-    const sec = parseInt(el.dataset.sec);
-    const img = parseInt(el.dataset.img);
-    if (parsedData.sections[sec] && parsedData.sections[sec].images && parsedData.sections[sec].images[img]) {
-      parsedData.sections[sec].images[img].size = el.value;
-    }
-  });
-
-
-  // Capture table data
-  document.querySelectorAll('.editable-table').forEach(table => {
-    const tableId = parseInt(table.dataset.tableId);
-    const tableData = [];
-    const rows = table.querySelectorAll('tr');
-    
-    rows.forEach(row => {
-      const cells = row.querySelectorAll('td[contenteditable]');
-      const rowData = [];
-      cells.forEach(cell => {
-        rowData.push(cell.innerText.trim());
-      });
-      if (rowData.length > 0) tableData.push(rowData);
-    });
-    
-    if (!parsedData.table_data) parsedData.table_data = {};
-    parsedData.table_data[tableId] = tableData;
-  });
-  
-  // Ensure images are properly structured for each section
-  if (parsedData.sections) {
-    parsedData.sections.forEach((section, sectionIndex) => {
-      if (!section.images) {
-        section.images = [];
-      }
-      
-      // Debug log for images
-      if (section.images.length > 0) {
-        console.log(`[DEBUG] Section ${sectionIndex} has ${section.images.length} images:`, 
-                   section.images.map(img => ({ path: img.path?.substring(0, 50), caption: img.caption, size: img.size })));
-      }
-    });
-  }
-  
-}
 
 
 async function regenerateMarkdown() {
