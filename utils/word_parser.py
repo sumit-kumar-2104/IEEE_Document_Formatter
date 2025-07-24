@@ -40,51 +40,59 @@ def extract_heading_level(text):
     return match.group(1) if match else None
 
 def extract_images_from_docx(doc, image_dir, file_hash):
-    """Enhanced image extraction with persistent directory structure"""
+    """Enhanced image extraction with deduplication"""
     rels = doc.part.rels
     image_map = {}
+    extracted_images = set()  # Track extracted images to prevent duplicates
     
-    # Ensure image directory exists
     os.makedirs(image_dir, exist_ok=True)
     
     image_counter = 0
     for rel in rels.values():
         if "image" in rel.target_ref:
-            # Create consistent image naming based on file hash and counter
-            image_counter += 1
-            image_extension = "png"  # Default to PNG
-            
-            # Try to get original extension
             try:
-                content_type = rel.target_part.content_type
-                if "jpeg" in content_type or "jpg" in content_type:
-                    image_extension = "jpg"
-                elif "png" in content_type:
-                    image_extension = "png"
-                elif "gif" in content_type:
-                    image_extension = "gif"
-            except:
-                pass
-            
-            # Generate consistent filename
-            image_filename = f"{file_hash}_img_{image_counter:03d}.{image_extension}"
-            image_path = os.path.join(image_dir, image_filename)
-            
-            # Only extract if image doesn't already exist
-            if not os.path.exists(image_path):
-                try:
-                    with open(image_path, "wb") as img_file:
-                        img_file.write(rel.target_part.blob)
-                    print(f"[INFO] Extracted image: {image_filename}")
-                except Exception as e:
-                    print(f"[ERROR] Failed to extract image {image_filename}: {e}")
+                # Generate hash of image content for deduplication
+                image_content = rel.target_part.blob
+                content_hash = hashlib.md5(image_content).hexdigest()
+                
+                # Skip if we've already extracted this exact image
+                if content_hash in extracted_images:
+                    print(f"[INFO] Skipping duplicate image: {content_hash[:8]}")
                     continue
-            else:
-                print(f"[INFO] Image already exists: {image_filename}")
-            
-            # Store relative path for web access
-            web_path = f"/static/images/{os.path.basename(image_dir)}/{image_filename}"
-            image_map[rel.rId] = web_path
+                
+                extracted_images.add(content_hash)
+                image_counter += 1
+                
+                # Determine file extension
+                image_extension = "png"  # Default
+                try:
+                    content_type = rel.target_part.content_type
+                    if "jpeg" in content_type or "jpg" in content_type:
+                        image_extension = "jpg"
+                    elif "png" in content_type:
+                        image_extension = "png"
+                    elif "gif" in content_type:
+                        image_extension = "gif"
+                except:
+                    pass
+                
+                # Generate consistent filename
+                image_filename = f"{file_hash}_img_{image_counter:03d}.{image_extension}"
+                image_path = os.path.join(image_dir, image_filename)
+                
+                # Extract image
+                with open(image_path, "wb") as img_file:
+                    img_file.write(image_content)
+                
+                print(f"[INFO] Extracted unique image: {image_filename}")
+                
+                # Store relative path for web access
+                web_path = f"/static/images/{os.path.basename(image_dir)}/{image_filename}"
+                image_map[rel.rId] = web_path
+                
+            except Exception as e:
+                print(f"[ERROR] Failed to extract image: {e}")
+                continue
     
     return image_map
 
@@ -145,7 +153,7 @@ def create_image_metadata(image_path, caption="", image_index=0):
         }
 
 def parse_docx(path):
-    """Enhanced DOCX parser with fixed image handling"""
+    """Enhanced DOCX parser with fixed image deduplication"""
     if not os.path.exists(path):
         return {"error": "File not found"}
     
@@ -162,7 +170,7 @@ def parse_docx(path):
     except Exception as e:
         return {"error": f"Failed to open DOCX file: {str(e)}"}
     
-    # Extract images with persistent directory
+    # Extract images with deduplication
     image_map = extract_images_from_docx(doc, image_dir, file_hash)
     
     # Store table data with their IDs for inline processing
@@ -175,7 +183,8 @@ def parse_docx(path):
         "sections": [],
         "references": [],
         "images": [],
-        "table_data": table_data
+        "table_data": table_data,
+        "template_type": "conference"  # Default template
     }
 
     current_section = None
@@ -186,7 +195,7 @@ def parse_docx(path):
     author_block_ended = False
     author_detected = False
     image_counter = 0
-    processed_image_paths = set()  # Track processed images to avoid duplicates
+    processed_image_paths = set()  # Track processed images globally
 
     # Process all elements in document order (paragraphs and tables)
     for element in doc.element.body:
@@ -198,16 +207,17 @@ def parse_docx(path):
                 if run.text:
                     full_text += run.text
 
-                # Image extraction from run
+                # Fixed image extraction from run - prevent duplicates
                 if run._element.xpath(".//pic:pic"):
                     embeds = find_blip_embeds(run._element)
                     for embed in embeds:
                         img_path = image_map.get(embed)
                         if img_path and img_path not in processed_image_paths:
+                            # Only add image placeholder once
                             full_text += f' [IMAGE: {img_path}] '
                             processed_image_paths.add(img_path)
                             
-                            # Create image metadata
+                            # Create image metadata only once
                             img_metadata = create_image_metadata(img_path, "", image_counter)
                             if img_metadata:
                                 result["images"].append(img_metadata)
@@ -320,15 +330,15 @@ def parse_docx(path):
     if current_section:
         result["sections"].append(current_section)
 
-    # Distribute images to sections based on IMAGE placeholders in content
-    distribute_images_to_sections(result)
+    # Fixed image distribution - prevent duplicates
+    distribute_images_to_sections_fixed(result)
 
-    print(f"[INFO] DOCX parsing completed. Found {len(result['sections'])} sections and {len(result['images'])} images")
+    print(f"[INFO] DOCX parsing completed. Found {len(result['sections'])} sections and {len(result['images'])} unique images")
     
     return result
 
-def distribute_images_to_sections(result):
-    """Distribute images to sections based on IMAGE placeholders in content"""
+def distribute_images_to_sections_fixed(result):
+    """Fixed image distribution that prevents duplicates"""
     if not result["images"]:
         return
     
@@ -340,7 +350,7 @@ def distribute_images_to_sections(result):
             if "images" not in subsection:
                 subsection["images"] = []
     
-    # Track which images have been assigned
+    # Track which images have been assigned to prevent duplicates
     assigned_images = set()
     
     # Check each section and subsection for image placeholders
@@ -351,7 +361,17 @@ def distribute_images_to_sections(result):
         for img in result["images"]:
             img_placeholder = f"[IMAGE: {img['path']}]"
             if img_placeholder in section_content and img['path'] not in assigned_images:
-                section["images"].append(img)
+                # Create a copy of the image metadata to avoid reference issues
+                img_copy = {
+                    "path": img['path'],
+                    "filename": img['filename'],
+                    "caption": img['caption'],
+                    "size": img['size'],
+                    "width": img.get('width', 0),
+                    "height": img.get('height', 0),
+                    "type": img.get('type', 'image/png')
+                }
+                section["images"].append(img_copy)
                 assigned_images.add(img['path'])
         
         # Check subsections
@@ -360,10 +380,32 @@ def distribute_images_to_sections(result):
             for img in result["images"]:
                 img_placeholder = f"[IMAGE: {img['path']}]"
                 if img_placeholder in subsection_content and img['path'] not in assigned_images:
-                    subsection["images"].append(img)
+                    # Create a copy of the image metadata
+                    img_copy = {
+                        "path": img['path'],
+                        "filename": img['filename'],
+                        "caption": img['caption'],
+                        "size": img['size'],
+                        "width": img.get('width', 0),
+                        "height": img.get('height', 0),
+                        "type": img.get('type', 'image/png')
+                    }
+                    subsection["images"].append(img_copy)
                     assigned_images.add(img['path'])
     
-    # If no images were assigned to any section, put them in the first section
+    # If no images were assigned to any section, put them in the first section (but only once)
     unassigned_images = [img for img in result["images"] if img['path'] not in assigned_images]
     if unassigned_images and result["sections"]:
-        result["sections"][0]["images"].extend(unassigned_images)
+        for img in unassigned_images:
+            img_copy = {
+                "path": img['path'],
+                "filename": img['filename'],
+                "caption": img['caption'],
+                "size": img['size'],
+                "width": img.get('width', 0),
+                "height": img.get('height', 0),
+                "type": img.get('type', 'image/png')
+            }
+            result["sections"][0]["images"].append(img_copy)
+    
+    print(f"[INFO] Distributed {len(assigned_images)} unique images to sections")
